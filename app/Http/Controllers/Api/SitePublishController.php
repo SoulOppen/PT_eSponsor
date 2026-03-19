@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\PublicPageController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class SitePublishController extends Controller
 {
@@ -16,6 +18,8 @@ class SitePublishController extends Controller
         $site->blocks()->where('is_active', true)->update(['is_published' => true]);
 
         $site->update(['published_at' => now()]);
+
+        Cache::forget(PublicPageController::cacheKey($site->slug));
 
         return response()->json(['ok' => true]);
     }

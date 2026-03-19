@@ -16,16 +16,15 @@ class PublicPageController extends Controller
             abort(404);
         }
 
-        $blocks = $site->blocks()
-            ->where('is_active', true)
-            ->where('is_published', true)
-            ->orderBy('order')
-            ->orderBy('id')
-            ->get();
+        $cached = Cache::remember(
+            static::cacheKey($slug),
+            3600,
+            fn () => static::loadPublicPayload($slug)
+        );
 
         return view('public.site', [
-            'site' => $site,
-            'blocks' => $blocks,
+            'site' => $cached['site'],
+            'blocks' => $cached['blocks'],
         ]);
     }
 
