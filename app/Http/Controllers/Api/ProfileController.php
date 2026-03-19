@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -27,6 +28,7 @@ class ProfileController extends Controller
                 'regex:/^[a-z0-9\-]+$/',
                 Rule::unique('sites', 'slug')->ignore($site->id),
             ],
+            'avatar' => ['sometimes', 'file', 'image', 'max:2048'],
         ]);
 
         if (array_key_exists('name', $validated)) {
@@ -42,6 +44,13 @@ class ProfileController extends Controller
 
         if (array_key_exists('slug', $validated)) {
             $site->update(['slug' => $validated['slug']]);
+        }
+
+        if ($request->hasFile('avatar')) {
+            $path = $request->file('avatar')->store('avatars', 'public');
+            $site->update([
+                'avatar_url' => Storage::disk('public')->url($path),
+            ]);
         }
 
         return response()->json(['ok' => true]);
