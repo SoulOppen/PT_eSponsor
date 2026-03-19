@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Models\Site;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -40,5 +42,18 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    public function hasSite(array $attributes = []): static
+    {
+        return $this->afterCreating(function (User $user) use ($attributes) {
+            Site::factory()->create(array_merge(
+                ['user_id' => $user->id],
+                $attributes
+            ));
+        });
     }
 }
