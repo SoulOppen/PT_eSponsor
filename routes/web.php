@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PublicPageController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -13,6 +14,8 @@ Route::get('/', function () {
         'phpVersion' => PHP_VERSION,
     ]);
 });
+
+Route::get('/@{slug}', [PublicPageController::class, 'show'])->where('slug', '[a-z0-9\-]+');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');

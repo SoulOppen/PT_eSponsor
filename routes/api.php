@@ -3,11 +3,13 @@
 use App\Http\Controllers\Api\BlockController;
 use App\Http\Controllers\Api\BlockSchemaController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\SitePublishController;
 use App\Http\Middleware\AcceptJson;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', AcceptJson::class])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update']);
+    Route::post('/site/publish', [SitePublishController::class, 'store']);
     Route::get('/block-schemas', [BlockSchemaController::class, 'index']);
 
     Route::get('/blocks', [BlockController::class, 'index']);
