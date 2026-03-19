@@ -4,6 +4,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $site->name }}</title>
+    <meta property="og:title" content="{{ $site->name }}">
+    @if($site->bio)
+        <meta name="description" content="{{ $site->bio }}">
+    @endif
+    @if($site->avatar_url)
+        <meta property="og:image" content="{{ $site->avatar_url }}">
+    @endif
 </head>
 <body>
 <main>
