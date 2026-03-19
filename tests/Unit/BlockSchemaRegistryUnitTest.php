@@ -21,7 +21,7 @@ it('returns schema for a specific type', function () {
 
 it('throws on unknown block type', function () {
     expect(fn () => (new BlockSchemaRegistry)->get('unknown'))
-        ->toThrow(InvalidArgumentException::class);
+        ->toThrow(\InvalidArgumentException::class);
 });
 
 it('every field in every schema has key, type, and label', function () {
