@@ -74,6 +74,30 @@ class BlockController extends Controller
         return response()->noContent();
     }
 
+    public function reorder(Request $request): JsonResponse
+    {
+        $site = $this->userSite($request);
+
+        $validated = $request->validate([
+            'blocks' => ['required', 'array'],
+            'blocks.*.id' => ['required', 'integer', 'exists:blocks,id'],
+            'blocks.*.order' => ['required', 'integer'],
+        ]);
+
+        foreach ($validated['blocks'] as $row) {
+            $block = Block::query()->find($row['id']);
+            if (! $block || (int) $block->site_id !== (int) $site->id) {
+                abort(403);
+            }
+        }
+
+        foreach ($validated['blocks'] as $row) {
+            Block::query()->where('id', $row['id'])->update(['order' => $row['order']]);
+        }
+
+        return response()->json(['ok' => true]);
+    }
+
     public function duplicate(Request $request, Block $block): JsonResponse
     {
         $site = $this->userSite($request);

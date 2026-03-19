@@ -12,6 +12,7 @@ Route::middleware(['auth', AcceptJson::class])->group(function () {
 
     Route::get('/blocks', [BlockController::class, 'index']);
     Route::post('/blocks', [BlockController::class, 'store']);
+    Route::post('/blocks/reorder', [BlockController::class, 'reorder']);
     Route::post('/blocks/{block}/duplicate', [BlockController::class, 'duplicate']);
     Route::patch('/blocks/{block}/toggle', [BlockController::class, 'toggle']);
     Route::put('/blocks/{block}', [BlockController::class, 'update']);
