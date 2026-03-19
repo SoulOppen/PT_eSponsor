@@ -3,7 +3,9 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "vite build"
+        "build": "vite build",
+        "test:run": "vitest run",
+        "test": "vitest"
     },
     "devDependencies": {
         "@inertiajs/vue3": "^2.0.0",
@@ -15,6 +17,8 @@
         "postcss": "^8.4.31",
         "tailwindcss": "^3.2.1",
         "vite": "^5.0",
+        "vitest": "^3.0.0",
+        "jsdom": "^25.0.0",
         "vue": "^3.4.0"
     }
 }

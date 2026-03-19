@@ -3,6 +3,10 @@ import laravel from 'laravel-vite-plugin';
 import vue from '@vitejs/plugin-vue';
 
 export default defineConfig({
+    test: {
+        globals: true,
+        environment: 'jsdom',
+    },
     plugins: [
         laravel({
             input: 'resources/js/app.js',
