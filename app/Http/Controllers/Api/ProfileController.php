@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\PublicPageController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -15,6 +17,7 @@ class ProfileController extends Controller
     {
         $user = $request->user();
         $site = $user->site;
+        $previousSlug = $site?->slug;
 
         abort_if($site === null, 404);
 
@@ -59,6 +62,12 @@ class ProfileController extends Controller
                 'avatar_url' => Storage::disk('public')->url($path),
             ]);
         }
+
+        $site->refresh();
+        if ($previousSlug) {
+            Cache::forget(PublicPageController::cacheKey($previousSlug));
+        }
+        Cache::forget(PublicPageController::cacheKey($site->slug));
 
         return response()->json(['ok' => true]);
     }
