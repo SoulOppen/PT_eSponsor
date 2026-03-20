@@ -49,6 +49,11 @@ function updateSubfield(rowIndex, subKey, value) {
     )
     emitRows(next)
 }
+
+function shouldShowSubfield(row, sub) {
+    if (sub.key !== 'custom_network') return true
+    return row?.network === 'otra'
+}
 </script>
 
 <template>
@@ -61,7 +66,11 @@ function updateSubfield(rowIndex, subKey, value) {
                 :key="rowIndex"
                 class="rounded-md border border-gray-200 bg-white p-3 shadow-sm"
             >
-                <div v-for="sub in field.subfields || []" :key="sub.key" class="mb-3 last:mb-0">
+                <template v-for="sub in field.subfields || []" :key="sub.key">
+                <div
+                    v-if="shouldShowSubfield(row, sub)"
+                    class="mb-3 last:mb-0"
+                >
                     <label class="mb-1 block text-xs font-medium text-gray-600">{{ sub.label }}</label>
                     <input
                         v-if="sub.type === 'text' || sub.type === 'url'"
@@ -71,13 +80,31 @@ function updateSubfield(rowIndex, subKey, value) {
                         :value="row[sub.key] ?? ''"
                         @input="updateSubfield(rowIndex, sub.key, $event.target.value)"
                     />
+                    <select
+                        v-else-if="sub.type === 'select'"
+                        :class="`${textLikeClass} bg-white`"
+                        :value="row[sub.key] ?? ''"
+                        @change="updateSubfield(rowIndex, sub.key, $event.target.value)"
+                    >
+                        <option v-for="opt in sub.options || []" :key="opt" :value="opt">
+                            {{ opt }}
+                        </option>
+                    </select>
                     <textarea
                         v-else-if="sub.type === 'textarea'"
                         :class="textareaClass"
                         :value="row[sub.key] ?? ''"
                         @input="updateSubfield(rowIndex, sub.key, $event.target.value)"
                     />
+                    <input
+                        v-else
+                        type="text"
+                        :class="textLikeClass"
+                        :value="row[sub.key] ?? ''"
+                        @input="updateSubfield(rowIndex, sub.key, $event.target.value)"
+                    />
                 </div>
+                </template>
 
 
                 <button

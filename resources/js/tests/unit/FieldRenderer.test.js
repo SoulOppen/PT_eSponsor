@@ -32,4 +32,27 @@ describe('FieldRenderer', () => {
         await wrapper.find('input').setValue('hello')
         expect(wrapper.emitted('update:modelValue')[0][0]).toBe('hello')
     })
+
+    it('renders repeater select and custom field visibility for social', async () => {
+        const wrapper = mount(FieldRenderer, {
+            props: {
+                field: {
+                    key: 'links',
+                    type: 'repeater',
+                    label: 'Enlaces',
+                    subfields: [
+                        { key: 'network', type: 'select', label: 'Red', options: ['instagram', 'otra'] },
+                        { key: 'custom_network', type: 'text', label: 'Nombre de la red' },
+                        { key: 'url', type: 'url', label: 'URL' },
+                    ],
+                },
+                modelValue: [{ network: 'instagram', custom_network: '', url: 'https://example.com' }],
+            },
+        })
+
+        expect(wrapper.find('select').exists()).toBe(true)
+        expect(wrapper.text()).not.toContain('Nombre de la red')
+        await wrapper.find('select').setValue('otra')
+        expect(wrapper.emitted('update:modelValue')).toBeTruthy()
+    })
 })

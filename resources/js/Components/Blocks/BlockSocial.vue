@@ -1,7 +1,21 @@
 <script setup>
+const NETWORK_LABELS = {
+    instagram: 'Instagram',
+    tiktok: 'TikTok',
+    youtube: 'YouTube',
+    facebook: 'Facebook',
+    x: 'X',
+}
+
 const { props: blockProps } = defineProps({
     props: { type: Object, required: true },
 })
+
+function socialLabel(item) {
+    if (item.network === 'otra' && item.custom_network) return item.custom_network
+    if (item.network && NETWORK_LABELS[item.network]) return NETWORK_LABELS[item.network]
+    return item.label || item.url
+}
 </script>
 
 <template>
@@ -17,7 +31,7 @@ const { props: blockProps } = defineProps({
             :href="item.url"
             rel="noopener noreferrer"
         >
-            {{ item.label || item.url }}
+            {{ socialLabel(item) }}
         </a>
     </nav>
 </template>

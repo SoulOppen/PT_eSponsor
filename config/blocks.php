@@ -59,7 +59,13 @@ return [
                     'label' => 'Enlaces',
                     'required' => false,
                     'subfields' => [
-                        ['key' => 'label', 'type' => 'text', 'label' => 'Nombre / red'],
+                        [
+                            'key' => 'network',
+                            'type' => 'select',
+                            'label' => 'Red social',
+                            'options' => ['instagram', 'tiktok', 'youtube', 'facebook', 'x', 'otra'],
+                        ],
+                        ['key' => 'custom_network', 'type' => 'text', 'label' => 'Nombre de la red (si eliges otra)'],
                         ['key' => 'url', 'type' => 'url', 'label' => 'URL'],
                     ],
                 ],

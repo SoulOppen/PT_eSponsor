@@ -17,6 +17,25 @@ async function apiJson(url, options = {}) {
     return fetch(url, { credentials: 'same-origin', ...options, headers })
 }
 
+async function readApiError(res, fallback) {
+    if (res.status === 419) return 'Tu sesion expiro. Recarga la pagina e inicia sesion de nuevo.'
+    if (res.status === 401) return 'Debes iniciar sesion para continuar.'
+    if (res.status === 403) return 'No tienes permisos para esta accion.'
+
+    try {
+        const json = await res.json()
+        if (json?.errors && typeof json.errors === 'object') {
+            const firstError = Object.values(json.errors)[0]
+            if (Array.isArray(firstError) && firstError[0]) return String(firstError[0])
+        }
+        if (json?.message) return String(json.message)
+    } catch {
+        // Keep fallback when response is not JSON.
+    }
+
+    return fallback
+}
+
 export function useBlocks(initialBlocks = []) {
     const blocks = ref(initialBlocks.map((b) => ({ ...b })))
 
@@ -29,7 +48,9 @@ export function useBlocks(initialBlocks = []) {
             method: 'POST',
             body: JSON.stringify({ type, props }),
         })
-        if (!res.ok) return
+        if (!res.ok) {
+            throw new Error(await readApiError(res, 'No se pudo crear el bloque.'))
+        }
         const json = await res.json()
         if (json.data) blocks.value.push(json.data)
     }

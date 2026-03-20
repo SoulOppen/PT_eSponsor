@@ -146,13 +146,16 @@ class BlockController extends Controller
 
     /**
      * @param  array<string, mixed>  $sub
-     * @return array<int, string>
+     * @return array<int, mixed>
      */
     private function validationRulesForSubfield(array $sub, bool $repeaterRequired): array
     {
         $subRequired = $repeaterRequired;
 
         return match ($sub['type'] ?? 'text') {
+            'select' => $subRequired
+                ? ['required', Rule::in($sub['options'] ?? [])]
+                : ['sometimes', 'nullable', Rule::in($sub['options'] ?? [])],
             'url' => $subRequired
                 ? ['required', 'url']
                 : ['sometimes', 'nullable', 'url'],

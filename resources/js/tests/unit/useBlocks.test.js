@@ -36,6 +36,16 @@ describe('useBlocks', () => {
         expect(blocks.value[0].id).toBe(99)
     })
 
+    it('addBlock throws validation error message', async () => {
+        fetch.mockResolvedValueOnce({
+            ok: false,
+            status: 422,
+            json: async () => ({ errors: { 'props.content': ['Contenido requerido'] } }),
+        })
+        const { addBlock } = useBlocks([])
+        await expect(addBlock('text', {})).rejects.toThrow('Contenido requerido')
+    })
+
     it('removeBlock removes item from local state', async () => {
         fetch.mockResolvedValueOnce({ ok: true, json: async () => ({}) })
         const { blocks, removeBlock } = useBlocks([{ id: 1, type: 'text', props: {}, order: 0 }])

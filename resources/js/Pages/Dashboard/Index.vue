@@ -6,7 +6,7 @@ import PreviewFrame from '@/Components/Preview/PreviewFrame.vue'
 import { useBlocks } from '@/composables/useBlocks'
 import { usePublish } from '@/composables/usePublish'
 import { Head, Link } from '@inertiajs/vue3'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 const props = defineProps({
     site: { type: Object, required: true },
@@ -26,7 +26,13 @@ function defaultPropsForType(type) {
         } else if (f.type === 'repeater') {
             const row = {}
             for (const s of f.subfields || []) {
-                row[s.key] = s.type === 'url' ? 'https://example.com' : 'Nuevo'
+                if (s.type === 'url') {
+                    row[s.key] = 'https://example.com'
+                } else if (s.type === 'select' && s.options?.length) {
+                    row[s.key] = s.options[0]
+                } else {
+                    row[s.key] = 'Nuevo'
+                }
             }
             out[f.key] = f.required ? [row] : []
         } else if (type === 'music' && f.key === 'url') {
@@ -54,12 +60,18 @@ const initialBlocks = props.blocks.map((b) => ({
 const { sortedBlocks, addBlock, removeBlock, toggleBlock, duplicateBlock, updateBlock, reorderBlocks } =
     useBlocks(initialBlocks)
 const { isDirty, markDirty, publish } = usePublish()
+const addBlockError = ref('')
 
 const publicUrl = computed(() => `/@${props.site.slug}`)
 
 async function handleAddType(type) {
-    await addBlock(type, defaultPropsForType(type))
-    markDirty()
+    addBlockError.value = ''
+    try {
+        await addBlock(type, defaultPropsForType(type))
+        markDirty()
+    } catch (error) {
+        addBlockError.value = error?.message || 'No se pudo crear el bloque.'
+    }
 }
 
 async function handleDelete(id) {
@@ -142,6 +154,13 @@ async function handleReorder(orderedIds) {
             <div class="app-main-padding mx-auto max-w-7xl space-y-8 sm:space-y-10">
                 <section>
                     <h3 class="mb-3 text-base font-semibold text-gray-900 sm:text-lg">Añadir bloque</h3>
+                    <p
+                        v-if="addBlockError"
+                        class="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+                        data-action="add-block-error"
+                    >
+                        {{ addBlockError }}
+                    </p>
                     <BlockCatalog :schemas="blockSchemas" @select="handleAddType" />
                 </section>
 
