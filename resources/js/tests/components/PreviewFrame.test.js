@@ -3,6 +3,22 @@ import { describe, it, expect } from 'vitest'
 import PreviewFrame from '../../Components/Preview/PreviewFrame.vue'
 
 describe('PreviewFrame', () => {
+    it('renders basic site fields in preview header', () => {
+        const wrapper = mount(PreviewFrame, {
+            props: {
+                blocks: [],
+                site: {
+                    name: 'Mi Sitio',
+                    bio: 'Bio demo',
+                    avatar_url: 'https://example.com/avatar.png',
+                },
+            },
+        })
+        expect(wrapper.text()).toContain('Mi Sitio')
+        expect(wrapper.text()).toContain('Bio demo')
+        expect(wrapper.find('img[alt="Avatar del sitio"]').exists()).toBe(true)
+    })
+
     it('renders a block for each active block', () => {
         const blocks = [
             { id: 1, type: 'text', props: { content: 'Hello' }, is_active: true, order: 0 },

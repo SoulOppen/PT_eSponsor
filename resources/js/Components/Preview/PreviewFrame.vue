@@ -36,6 +36,25 @@ function rendererFor(type) {
     <div
         class="preview-frame w-full min-w-0 max-w-full overflow-x-auto break-words text-gray-900 [&_iframe]:max-w-full [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-md"
     >
+        <header v-if="site?.name || site?.bio || site?.avatar_url" class="mb-4 border-b border-gray-200 pb-4">
+            <div class="flex items-start gap-3">
+                <img
+                    v-if="site?.avatar_url"
+                    :src="site.avatar_url"
+                    alt="Avatar del sitio"
+                    class="h-12 w-12 shrink-0 rounded-full object-cover ring-1 ring-gray-200"
+                />
+                <div class="min-w-0">
+                    <h4 v-if="site?.name" class="truncate text-lg font-semibold text-gray-900">
+                        {{ site.name }}
+                    </h4>
+                    <p v-if="site?.bio" class="mt-1 text-sm text-gray-600">
+                        {{ site.bio }}
+                    </p>
+                </div>
+            </div>
+        </header>
+
         <template v-for="b in visibleBlocks" :key="b.id">
             <component
                 :is="rendererFor(b.type)"

@@ -61,8 +61,11 @@ const { sortedBlocks, addBlock, removeBlock, toggleBlock, duplicateBlock, update
     useBlocks(initialBlocks)
 const { isDirty, markDirty, publish } = usePublish()
 const addBlockError = ref('')
+const mobilePanel = ref('blocks')
 
 const publicUrl = computed(() => `/@${props.site.slug}`)
+const blockCount = computed(() => sortedBlocks.value.length)
+const hasBlocks = computed(() => blockCount.value > 0)
 
 async function handleAddType(type) {
     addBlockError.value = ''
@@ -164,10 +167,44 @@ async function handleReorder(orderedIds) {
                     <BlockCatalog :schemas="blockSchemas" @select="handleAddType" />
                 </section>
 
+                <div class="mb-3 grid grid-cols-2 gap-2 rounded-lg bg-gray-100 p-1 lg:hidden">
+                    <button
+                        type="button"
+                        class="min-h-11 rounded-md px-3 text-sm font-medium transition"
+                        :class="mobilePanel === 'blocks' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600'"
+                        @click="mobilePanel = 'blocks'"
+                    >
+                        Bloques
+                    </button>
+                    <button
+                        type="button"
+                        class="min-h-11 rounded-md px-3 text-sm font-medium transition"
+                        :class="mobilePanel === 'preview' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600'"
+                        @click="mobilePanel = 'preview'"
+                    >
+                        Vista previa
+                    </button>
+                </div>
+
                 <!-- Una columna por defecto; dos desde lg -->
                 <div class="grid gap-8 lg:grid-cols-2 lg:gap-10">
-                    <section class="min-w-0">
-                        <h3 class="mb-3 text-base font-semibold text-gray-900 sm:text-lg">Tus bloques</h3>
+                    <section
+                        class="min-w-0 rounded-lg p-3 sm:p-4"
+                        :class="[
+                            { hidden: mobilePanel !== 'blocks', 'lg:block': true },
+                            hasBlocks ? 'bg-blue-50 ring-1 ring-blue-200' : 'bg-transparent',
+                        ]"
+                    >
+                        <div class="mb-3 flex items-center gap-2">
+                            <h3 class="text-base font-semibold text-gray-900 sm:text-lg">Tus bloques</h3>
+                            <span
+                                class="inline-flex h-6 w-10 items-center justify-center rounded-full bg-sky-200 text-xs font-bold text-sky-900"
+                                :class="hasBlocks ? 'opacity-100' : 'opacity-0'"
+                                aria-live="polite"
+                            >
+                                {{ blockCount }}
+                            </span>
+                        </div>
                         <BlockList
                             :blocks="sortedBlocks"
                             :block-schemas="blockSchemas"
@@ -178,7 +215,7 @@ async function handleReorder(orderedIds) {
                             @reorder="handleReorder"
                         />
                     </section>
-                    <section class="min-w-0">
+                    <section class="min-w-0" :class="{ hidden: mobilePanel !== 'preview', 'lg:block': true }">
                         <h3 class="mb-3 text-base font-semibold text-gray-900 sm:text-lg">Vista previa</h3>
                         <div class="overflow-x-auto rounded-lg border border-dashed border-gray-300 bg-gray-50 p-3 sm:p-4">
                             <PreviewFrame :blocks="sortedBlocks" :site="site" />
