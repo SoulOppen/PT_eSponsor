@@ -1,20 +1,54 @@
-﻿<script setup>
+<script setup>
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { watch, ref } from 'vue';
 
 const form = useForm({
     name: '',
+    site_name: '',
+    slug: '',
+    bio: '',
+    avatar: null,
     email: '',
     password: '',
     password_confirmation: '',
 });
 
+const slugTouched = ref(false);
+
+const slugify = (value) =>
+    String(value || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 60);
+
+watch(
+    () => form.name,
+    (name) => {
+        if (slugTouched.value) return;
+        form.slug = slugify(name);
+    },
+);
+
+const onSlugInput = (event) => {
+    slugTouched.value = true;
+    form.slug = slugify(event.target.value);
+};
+
+const onAvatarChange = (event) => {
+    form.avatar = event.target.files?.[0] || null;
+};
+
 const submit = () => {
     form.post(route('register'), {
+        forceFormData: true,
         onFinish: () => form.reset('password', 'password_confirmation'),
     });
 };
@@ -39,6 +73,60 @@ const submit = () => {
                 />
 
                 <InputError class="mt-2" :message="form.errors.name" />
+            </div>
+
+            <div class="mt-4">
+                <InputLabel for="site_name" value="Nombre público del sitio (opcional)" />
+
+                <TextInput
+                    id="site_name"
+                    type="text"
+                    class="mt-1 block w-full"
+                    v-model="form.site_name"
+                    autocomplete="organization"
+                />
+
+                <InputError class="mt-2" :message="form.errors.site_name" />
+            </div>
+
+            <div class="mt-4">
+                <InputLabel for="slug" value="Slug del sitio" />
+
+                <TextInput
+                    id="slug"
+                    type="text"
+                    class="mt-1 block w-full"
+                    :model-value="form.slug"
+                    required
+                    autocomplete="off"
+                    @input="onSlugInput"
+                />
+
+                <p class="mt-1 text-xs text-gray-500">Solo minúsculas, números y guiones.</p>
+                <InputError class="mt-2" :message="form.errors.slug" />
+            </div>
+
+            <div class="mt-4">
+                <InputLabel for="bio" value="Bio (opcional)" />
+                <textarea
+                    id="bio"
+                    v-model="form.bio"
+                    rows="3"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+                <InputError class="mt-2" :message="form.errors.bio" />
+            </div>
+
+            <div class="mt-4">
+                <InputLabel for="avatar" value="Avatar (opcional)" />
+                <input
+                    id="avatar"
+                    type="file"
+                    accept="image/*"
+                    class="mt-1 block w-full text-sm text-gray-600 file:mr-3 file:rounded-md file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:font-medium file:text-indigo-700"
+                    @change="onAvatarChange"
+                />
+                <InputError class="mt-2" :message="form.errors.avatar" />
             </div>
 
             <div class="mt-4">
