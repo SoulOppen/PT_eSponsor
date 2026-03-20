@@ -49,7 +49,7 @@ class RegisteredUserController extends Controller
                 Rule::unique('sites', 'slug'),
             ],
             'bio' => ['sometimes', 'nullable', 'string'],
-            'avatar' => ['sometimes', 'file', 'image', 'max:2048'],
+            'avatar' => ['sometimes', 'nullable', 'file', 'image', 'max:2048'],
         ]);
 
         $user = DB::transaction(function () use ($validated, $request) {

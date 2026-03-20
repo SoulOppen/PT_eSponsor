@@ -95,4 +95,22 @@ class RegistrationTest extends TestCase
             'name' => 'Nombre De Usuario',
         ]);
     }
+
+    public function test_registration_accepts_empty_avatar_field(): void
+    {
+        $response = $this->post('/register', [
+            'name' => 'Sin Avatar',
+            'slug' => 'sin-avatar',
+            'avatar' => null,
+            'email' => 'sinavatar@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
+
+        $response->assertRedirect(route('dashboard', absolute: false));
+        $this->assertDatabaseHas('sites', [
+            'slug' => 'sin-avatar',
+            'avatar_url' => null,
+        ]);
+    }
 }

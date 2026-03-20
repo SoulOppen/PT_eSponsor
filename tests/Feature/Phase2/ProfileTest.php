@@ -65,3 +65,17 @@ it('avatar file size is capped at 2 MB', function () {
         ->patch('/api/profile', ['avatar' => $file])
         ->assertUnprocessable();
 });
+
+it('remove_avatar clears avatar_url and deletes stored file', function () {
+    Storage::fake('public');
+    $user = User::factory()->hasSite()->create();
+    Storage::disk('public')->put('avatars/existing.jpg', 'dummy');
+    $user->site->update(['avatar_url' => '/storage/avatars/existing.jpg']);
+
+    $this->actingAs($user)
+        ->patch('/api/profile', ['remove_avatar' => true])
+        ->assertOk();
+
+    expect($user->site->fresh()->avatar_url)->toBeNull();
+    Storage::disk('public')->assertMissing('avatars/existing.jpg');
+});

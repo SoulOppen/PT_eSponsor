@@ -1,7 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import { Link } from '@inertiajs/vue3'
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 
 const props = defineProps({
     site: {
@@ -28,6 +28,8 @@ watch(
 )
 
 const avatarFile = ref(null)
+const avatarInput = ref(null)
+const selectedAvatarPreview = ref('')
 const removeAvatar = ref(false)
 const saving = ref(false)
 const message = ref('')
@@ -48,18 +50,43 @@ const avatarPreviewUrl = computed(() => {
     return String(raw)
 })
 
+const currentAvatarDisplay = computed(() => avatarPreviewUrl.value || '')
+const nextAvatarDisplay = computed(() => {
+    if (selectedAvatarPreview.value) return selectedAvatarPreview.value
+    if (removeAvatar.value) return ''
+    return avatarPreviewUrl.value || ''
+})
+
 function onAvatarChange(event) {
     const file = event.target.files?.[0]
+    if (selectedAvatarPreview.value) {
+        URL.revokeObjectURL(selectedAvatarPreview.value)
+        selectedAvatarPreview.value = ''
+    }
     avatarFile.value = file || null
     if (avatarFile.value) {
+        selectedAvatarPreview.value = URL.createObjectURL(avatarFile.value)
         removeAvatar.value = false
     }
 }
 
 function onRemoveAvatar() {
+    if (selectedAvatarPreview.value) {
+        URL.revokeObjectURL(selectedAvatarPreview.value)
+        selectedAvatarPreview.value = ''
+    }
     avatarFile.value = null
+    if (avatarInput.value) {
+        avatarInput.value.value = ''
+    }
     removeAvatar.value = true
 }
+
+onBeforeUnmount(() => {
+    if (selectedAvatarPreview.value) {
+        URL.revokeObjectURL(selectedAvatarPreview.value)
+    }
+})
 
 function readXsrfToken() {
     const m = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]*)/)
@@ -184,19 +211,48 @@ async function saveProfile() {
                         <label class="mb-1 block text-sm font-medium text-gray-700" for="site-avatar"
                             >Avatar</label
                         >
+                        <div class="mb-3 flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                            <div class="text-center">
+                                <div
+                                    class="mx-auto flex h-16 w-16 items-center justify-center overflow-hidden rounded-full ring-1 ring-gray-300"
+                                >
+                                    <img
+                                        v-if="currentAvatarDisplay"
+                                        :src="currentAvatarDisplay"
+                                        alt="Avatar actual"
+                                        class="h-full w-full object-cover"
+                                    />
+                                    <span v-else class="px-2 text-[10px] font-semibold text-gray-500">No avatar</span>
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500">Actual</p>
+                            </div>
+
+                            <span class="text-lg font-bold text-gray-400">→</span>
+
+                            <div class="text-center">
+                                <div
+                                    class="mx-auto flex h-16 w-16 items-center justify-center overflow-hidden rounded-full ring-1 ring-indigo-300"
+                                >
+                                    <img
+                                        v-if="nextAvatarDisplay"
+                                        :src="nextAvatarDisplay"
+                                        alt="Avatar nuevo"
+                                        class="h-full w-full object-cover"
+                                    />
+                                    <span v-else class="px-2 text-[10px] font-semibold text-gray-500">No avatar</span>
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500">Nuevo</p>
+                            </div>
+                        </div>
+
                         <input
                             id="site-avatar"
+                            ref="avatarInput"
                             name="avatar"
                             type="file"
                             accept="image/*"
                             class="min-h-11 w-full touch-manipulation text-sm text-gray-600 file:mr-3 file:rounded-md file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-indigo-700"
                             @change="onAvatarChange"
-                        />
-                        <img
-                            v-if="avatarPreviewUrl && !removeAvatar"
-                            :src="avatarPreviewUrl"
-                            alt="Avatar del sitio"
-                            class="mt-3 h-24 w-24 rounded-full object-cover ring-1 ring-gray-200"
                         />
                         <button
                             v-if="(avatarPreviewUrl && !removeAvatar) || avatarFile"

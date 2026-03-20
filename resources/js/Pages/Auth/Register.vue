@@ -49,6 +49,13 @@ const onAvatarChange = (event) => {
 const submit = () => {
     form.post(route('register'), {
         forceFormData: true,
+        transform: (data) => {
+            const next = { ...data }
+            if (!next.avatar) {
+                delete next.avatar
+            }
+            return next
+        },
         onFinish: () => form.reset('password', 'password_confirmation'),
     });
 };

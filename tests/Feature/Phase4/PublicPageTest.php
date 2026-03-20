@@ -2,7 +2,6 @@
 
 use App\Models\Block;
 use App\Models\User;
-use Illuminate\Support\Facades\Cache;
 
 it('public page returns 200 for a valid slug', function () {
     User::factory()->hasSite(['slug' => 'alice'])->create();
@@ -18,6 +17,15 @@ it('public page shows site name and bio', function () {
     $this->get('/@bob')->assertSee('Bob Builder')->assertSee('I can fix it');
 });
 
+it('public page does not render avatar image or og:image when avatar is missing', function () {
+    User::factory()->hasSite(['slug' => 'no-avatar', 'avatar_url' => null])->create();
+
+    $this->get('/@no-avatar')
+        ->assertOk()
+        ->assertDontSee('Avatar de')
+        ->assertDontSee('property="og:image"', false);
+});
+
 it('inactive blocks are not rendered on public page', function () {
     $user = User::factory()->hasSite(['slug' => 'carol'])->create();
     Block::factory()->create([
@@ -27,22 +35,15 @@ it('inactive blocks are not rendered on public page', function () {
     $this->get('/@carol')->assertDontSee('Hidden');
 });
 
-it('public page is cached after first load', function () {
-    Cache::spy();
-    User::factory()->hasSite(['slug' => 'dave'])->create();
-    $this->get('/@dave');
-    Cache::shouldHaveReceived('remember')
-        ->with(\Mockery::pattern('/dave/'), \Mockery::any(), \Mockery::any())
-        ->once();
-});
+it('public page reflects latest site avatar without caching', function () {
+    $user = User::factory()->hasSite(['slug' => 'dave', 'avatar_url' => null])->create();
+    $this->get('/@dave')->assertDontSee('Avatar de');
 
-it('cache is invalidated after publishing', function () {
-    Cache::spy();
-    $user = User::factory()->hasSite(['slug' => 'eve'])->create();
-    $this->actingAs($user)->postJson('/api/site/publish');
-    Cache::shouldHaveReceived('forget')
-        ->with(\Mockery::pattern('/eve/'))
-        ->once();
+    $user->site->update(['avatar_url' => '/storage/avatars/new-avatar.png']);
+
+    $this->get('/@dave')
+        ->assertSee('Avatar de', false)
+        ->assertSee('/storage/avatars/new-avatar.png');
 });
 
 it('public page does not load the vue dashboard bundle', function () {
