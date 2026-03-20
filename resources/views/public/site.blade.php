@@ -1,6 +1,17 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
+    @php
+        $rawAvatar = $site->avatar_url;
+        $avatarUrl = null;
+        if (is_string($rawAvatar) && $rawAvatar !== '') {
+            if (str_starts_with($rawAvatar, 'http://') || str_starts_with($rawAvatar, 'https://') || str_starts_with($rawAvatar, '/')) {
+                $avatarUrl = $rawAvatar;
+            } elseif (str_starts_with($rawAvatar, 'avatars/')) {
+                $avatarUrl = '/storage/' . $rawAvatar;
+            }
+        }
+    @endphp
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $site->name }}</title>
@@ -8,8 +19,8 @@
     @if($site->bio)
         <meta name="description" content="{{ $site->bio }}">
     @endif
-    @if($site->avatar_url)
-        <meta property="og:image" content="{{ $site->avatar_url }}">
+    @if($avatarUrl)
+        <meta property="og:image" content="{{ $avatarUrl }}">
     @endif
     <style>
         body { font-family: system-ui, -apple-system, Segoe UI, sans-serif; margin: 0; line-height: 1.5; color: #111; }
@@ -21,6 +32,13 @@
 <body>
 <main>
     <header style="margin-bottom: 1.5rem;">
+        @if($avatarUrl)
+            <img
+                src="{{ $avatarUrl }}"
+                alt="Avatar de {{ $site->name }}"
+                style="width: 5.5rem; height: 5.5rem; border-radius: 9999px; object-fit: cover; margin: 0 0 1rem;"
+            >
+        @endif
         <h1 style="margin: 0 0 0.5rem; font-size: 1.75rem;">{{ $site->name }}</h1>
         @if($site->bio)
             <p style="margin: 0; color: #444;">{{ $site->bio }}</p>

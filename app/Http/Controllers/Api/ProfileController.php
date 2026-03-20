@@ -29,6 +29,7 @@ class ProfileController extends Controller
                 Rule::unique('sites', 'slug')->ignore($site->id),
             ],
             'avatar' => ['sometimes', 'file', 'image', 'max:2048'],
+            'remove_avatar' => ['sometimes', 'boolean'],
         ]);
 
         if (array_key_exists('name', $validated)) {
@@ -46,7 +47,13 @@ class ProfileController extends Controller
             $site->update(['slug' => $validated['slug']]);
         }
 
+        if (($validated['remove_avatar'] ?? false) === true && ! $request->hasFile('avatar')) {
+            $this->deleteStoredAvatarIfPresent((string) ($site->avatar_url ?? ''));
+            $site->update(['avatar_url' => null]);
+        }
+
         if ($request->hasFile('avatar')) {
+            $this->deleteStoredAvatarIfPresent((string) ($site->avatar_url ?? ''));
             $path = $request->file('avatar')->store('avatars', 'public');
             $site->update([
                 'avatar_url' => Storage::disk('public')->url($path),
@@ -54,5 +61,25 @@ class ProfileController extends Controller
         }
 
         return response()->json(['ok' => true]);
+    }
+
+    private function deleteStoredAvatarIfPresent(string $avatarUrl): void
+    {
+        if ($avatarUrl === '') {
+            return;
+        }
+
+        $path = parse_url($avatarUrl, PHP_URL_PATH) ?: '';
+        if (is_string($path) && str_starts_with($path, '/storage/')) {
+            $relative = ltrim(substr($path, strlen('/storage/')), '/');
+            if ($relative !== '') {
+                Storage::disk('public')->delete($relative);
+            }
+            return;
+        }
+
+        if (str_starts_with($avatarUrl, 'avatars/')) {
+            Storage::disk('public')->delete($avatarUrl);
+        }
     }
 }

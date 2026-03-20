@@ -28,6 +28,7 @@ watch(
 )
 
 const avatarFile = ref(null)
+const removeAvatar = ref(false)
 const saving = ref(false)
 const message = ref('')
 
@@ -50,6 +51,14 @@ const avatarPreviewUrl = computed(() => {
 function onAvatarChange(event) {
     const file = event.target.files?.[0]
     avatarFile.value = file || null
+    if (avatarFile.value) {
+        removeAvatar.value = false
+    }
+}
+
+function onRemoveAvatar() {
+    avatarFile.value = null
+    removeAvatar.value = true
 }
 
 function readXsrfToken() {
@@ -70,6 +79,7 @@ async function saveProfile() {
             body.append('slug', form.slug)
             body.append('bio', form.bio)
             body.append('avatar', avatarFile.value)
+            body.append('remove_avatar', removeAvatar.value ? '1' : '0')
             res = await fetch('/api/profile', {
                 method: 'PATCH',
                 credentials: 'same-origin',
@@ -92,6 +102,7 @@ async function saveProfile() {
                     name: form.name,
                     slug: form.slug,
                     bio: form.bio,
+                    remove_avatar: removeAvatar.value,
                 }),
             })
         }
@@ -182,11 +193,19 @@ async function saveProfile() {
                             @change="onAvatarChange"
                         />
                         <img
-                            v-if="avatarPreviewUrl"
+                            v-if="avatarPreviewUrl && !removeAvatar"
                             :src="avatarPreviewUrl"
                             alt="Avatar del sitio"
                             class="mt-3 h-24 w-24 rounded-full object-cover ring-1 ring-gray-200"
                         />
+                        <button
+                            v-if="(avatarPreviewUrl && !removeAvatar) || avatarFile"
+                            type="button"
+                            class="mt-2 inline-flex min-h-10 items-center rounded-md border border-red-200 bg-red-50 px-3 text-sm font-medium text-red-700 hover:bg-red-100"
+                            @click="onRemoveAvatar"
+                        >
+                            Borrar avatar
+                        </button>
                     </div>
                     <p v-if="message" class="text-sm text-gray-600">{{ message }}</p>
                     <button

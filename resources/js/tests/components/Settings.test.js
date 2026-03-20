@@ -27,4 +27,12 @@ describe('Settings page', () => {
         })
         expect(wrapper.find('img').attributes('src')).toBe('/img/test.jpg')
     })
+
+    it('shows remove avatar button when avatar exists', () => {
+        const wrapper = mount(Settings, {
+            props: { site: { name: '', slug: '', bio: '', avatar_url: '/img/test.jpg' } },
+            global: { stubs: globalStubs },
+        })
+        expect(wrapper.text()).toContain('Borrar avatar')
+    })
 })
