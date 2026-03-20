@@ -57,7 +57,9 @@ export function useBlocks(initialBlocks = []) {
 
     async function removeBlock(id) {
         const res = await apiJson(`/api/blocks/${id}`, { method: 'DELETE' })
-        if (!res.ok) return
+        if (!res.ok) {
+            throw new Error(await readApiError(res, 'No se pudo eliminar el bloque.'))
+        }
         blocks.value = blocks.value.filter((b) => b.id !== id)
     }
 
@@ -66,7 +68,9 @@ export function useBlocks(initialBlocks = []) {
             method: 'PATCH',
             body: '{}',
         })
-        if (!res.ok) return
+        if (!res.ok) {
+            throw new Error(await readApiError(res, 'No se pudo cambiar el estado del bloque.'))
+        }
         const json = await res.json()
         const idx = blocks.value.findIndex((b) => b.id === id)
         if (idx !== -1 && json.data) blocks.value[idx] = { ...blocks.value[idx], ...json.data }
@@ -77,7 +81,9 @@ export function useBlocks(initialBlocks = []) {
             method: 'POST',
             body: '{}',
         })
-        if (!res.ok) return
+        if (!res.ok) {
+            throw new Error(await readApiError(res, 'No se pudo duplicar el bloque.'))
+        }
         const json = await res.json()
         if (json.data) blocks.value.push(json.data)
     }
@@ -87,7 +93,9 @@ export function useBlocks(initialBlocks = []) {
             method: 'PUT',
             body: JSON.stringify({ props }),
         })
-        if (!res.ok) return
+        if (!res.ok) {
+            throw new Error(await readApiError(res, 'No se pudo guardar el bloque.'))
+        }
         const json = await res.json()
         const idx = blocks.value.findIndex((b) => b.id === id)
         if (idx !== -1 && json.data) blocks.value[idx] = { ...blocks.value[idx], ...json.data }
@@ -102,7 +110,9 @@ export function useBlocks(initialBlocks = []) {
             method: 'POST',
             body: JSON.stringify({ blocks: rows }),
         })
-        if (!res.ok) return
+        if (!res.ok) {
+            throw new Error(await readApiError(res, 'No se pudo reordenar los bloques.'))
+        }
         const orderById = Object.fromEntries(orderedIds.map((id, i) => [Number(id), i]))
         blocks.value = blocks.value.map((b) => ({
             ...b,

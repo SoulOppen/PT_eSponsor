@@ -2,6 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import BlockCatalog from '@/Components/Editor/BlockCatalog.vue'
 import BlockList from '@/Components/Editor/BlockList.vue'
+import ResetBlocksDialog from '@/Components/Editor/ResetBlocksDialog.vue'
 import PreviewFrame from '@/Components/Preview/PreviewFrame.vue'
 import { useBlocks } from '@/composables/useBlocks'
 import { usePublish } from '@/composables/usePublish'
@@ -61,11 +62,23 @@ const { sortedBlocks, addBlock, removeBlock, toggleBlock, duplicateBlock, update
     useBlocks(initialBlocks)
 const { isDirty, markDirty, publish } = usePublish()
 const addBlockError = ref('')
+const resetError = ref('')
+const resettingBlocks = ref(false)
+const showResetDialog = ref(false)
 const mobilePanel = ref('blocks')
 
 const publicUrl = computed(() => `/@${props.site.slug}`)
 const blockCount = computed(() => sortedBlocks.value.length)
 const hasBlocks = computed(() => blockCount.value > 0)
+const blockTypeCounts = computed(() => {
+    const counts = {}
+    for (const block of sortedBlocks.value) {
+        const type = block?.type
+        if (!type) continue
+        counts[type] = (counts[type] || 0) + 1
+    }
+    return counts
+})
 
 async function handleAddType(type) {
     addBlockError.value = ''
@@ -78,8 +91,13 @@ async function handleAddType(type) {
 }
 
 async function handleDelete(id) {
-    await removeBlock(id)
-    markDirty()
+    resetError.value = ''
+    try {
+        await removeBlock(id)
+        markDirty()
+    } catch (error) {
+        resetError.value = error?.message || 'No se pudo eliminar el bloque.'
+    }
 }
 
 async function handleToggle(id) {
@@ -104,6 +122,30 @@ async function handlePublish() {
 async function handleReorder(orderedIds) {
     await reorderBlocks(orderedIds)
     markDirty()
+}
+
+async function handleResetBlocks() {
+    if (!sortedBlocks.value.length || resettingBlocks.value) return
+    showResetDialog.value = false
+    resetError.value = ''
+    resettingBlocks.value = true
+
+    try {
+        const ids = sortedBlocks.value.map((b) => b.id)
+        for (const id of ids) {
+            await removeBlock(id)
+        }
+        markDirty()
+    } catch (error) {
+        resetError.value = error?.message || 'No se pudieron eliminar todos los bloques.'
+    } finally {
+        resettingBlocks.value = false
+    }
+}
+
+function openResetDialog() {
+    if (!hasBlocks.value || resettingBlocks.value) return
+    showResetDialog.value = true
 }
 </script>
 
@@ -164,7 +206,7 @@ async function handleReorder(orderedIds) {
                     >
                         {{ addBlockError }}
                     </p>
-                    <BlockCatalog :schemas="blockSchemas" @select="handleAddType" />
+                    <BlockCatalog :schemas="blockSchemas" :counts="blockTypeCounts" @select="handleAddType" />
                 </section>
 
                 <div class="mb-3 grid grid-cols-2 gap-2 rounded-lg bg-gray-100 p-1 lg:hidden">
@@ -195,16 +237,40 @@ async function handleReorder(orderedIds) {
                             hasBlocks ? 'bg-blue-50 ring-1 ring-blue-200' : 'bg-transparent',
                         ]"
                     >
-                        <div class="mb-3 flex items-center gap-2">
-                            <h3 class="text-base font-semibold text-gray-900 sm:text-lg">Tus bloques</h3>
-                            <span
-                                class="inline-flex h-6 w-10 items-center justify-center rounded-full bg-sky-200 text-xs font-bold text-sky-900"
-                                :class="hasBlocks ? 'opacity-100' : 'opacity-0'"
-                                aria-live="polite"
+                        <div class="mb-3 flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-base font-semibold text-gray-900 sm:text-lg">Tus bloques</h3>
+                                <span
+                                    class="inline-flex h-6 w-10 items-center justify-center rounded-full bg-sky-200 text-xs font-bold text-sky-900"
+                                    :class="hasBlocks ? 'opacity-100' : 'opacity-0'"
+                                    aria-live="polite"
+                                >
+                                    {{ blockCount }}
+                                </span>
+                            </div>
+                            <button
+                                type="button"
+                                class="inline-flex min-h-10 items-center gap-2 rounded-md border border-red-200 bg-white px-3 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                :disabled="!hasBlocks || resettingBlocks"
+                                data-action="reset-blocks"
+                                @click="openResetDialog"
                             >
-                                {{ blockCount }}
-                            </span>
+                                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path
+                                        fill-rule="evenodd"
+                                        d="M8.5 2a1 1 0 0 0-1 1V4H5a1 1 0 1 0 0 2h.278l.58 9.29A2 2 0 0 0 7.854 17h4.292a2 2 0 0 0 1.996-1.71l.58-9.29H15a1 1 0 1 0 0-2h-2.5V3a1 1 0 0 0-1-1h-3Z"
+                                        clip-rule="evenodd"
+                                    />
+                                </svg>
+                                {{ resettingBlocks ? 'Reseteando...' : 'Reset' }}
+                            </button>
                         </div>
+                        <p
+                            v-if="resetError"
+                            class="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+                        >
+                            {{ resetError }}
+                        </p>
                         <BlockList
                             :blocks="sortedBlocks"
                             :block-schemas="blockSchemas"
@@ -224,5 +290,13 @@ async function handleReorder(orderedIds) {
                 </div>
             </div>
         </div>
+
+        <ResetBlocksDialog
+            :show="showResetDialog"
+            :count="blockCount"
+            :loading="resettingBlocks"
+            @close="showResetDialog = false"
+            @confirm="handleResetBlocks"
+        />
     </AuthenticatedLayout>
 </template>
