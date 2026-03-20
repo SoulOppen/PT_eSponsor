@@ -31,18 +31,20 @@
 </head>
 <body>
 <main>
-    <header style="margin-bottom: 1.5rem;">
+    <header style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem;">
         @if($avatarUrl)
             <img
                 src="{{ $avatarUrl }}"
                 alt="Avatar de {{ $site->name }}"
-                style="width: 5.5rem; height: 5.5rem; border-radius: 9999px; object-fit: cover; margin: 0 0 1rem;"
+                style="width: 5.5rem; height: 5.5rem; border-radius: 9999px; object-fit: cover; flex-shrink: 0;"
             >
         @endif
-        <h1 style="margin: 0 0 0.5rem; font-size: 1.75rem;">{{ $site->name }}</h1>
-        @if($site->bio)
-            <p style="margin: 0; color: #444;">{{ $site->bio }}</p>
-        @endif
+        <div>
+            <h1 style="margin: 0 0 0.5rem; font-size: 1.75rem;">{{ $site->name }}</h1>
+            @if($site->bio)
+                <p style="margin: 0; color: #444;">{{ $site->bio }}</p>
+            @endif
+        </div>
     </header>
 
     @forelse($blocks as $block)
