@@ -1,7 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import { Link } from '@inertiajs/vue3'
-import { reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 
 const props = defineProps({
     site: {
@@ -30,6 +30,22 @@ watch(
 const avatarFile = ref(null)
 const saving = ref(false)
 const message = ref('')
+
+const avatarPreviewUrl = computed(() => {
+    const raw = props.site?.avatar_url
+    if (!raw) return ''
+    if (String(raw).startsWith('http://') || String(raw).startsWith('https://')) {
+        return String(raw)
+    }
+    if (String(raw).startsWith('/')) {
+        return String(raw)
+    }
+    // Backward compatibility when DB has relative storage paths.
+    if (String(raw).startsWith('avatars/')) {
+        return `/storage/${raw}`
+    }
+    return String(raw)
+})
 
 function onAvatarChange(event) {
     const file = event.target.files?.[0]
@@ -166,9 +182,9 @@ async function saveProfile() {
                             @change="onAvatarChange"
                         />
                         <img
-                            v-if="site.avatar_url"
-                            :src="site.avatar_url"
-                            alt=""
+                            v-if="avatarPreviewUrl"
+                            :src="avatarPreviewUrl"
+                            alt="Avatar del sitio"
                             class="mt-3 h-24 w-24 rounded-full object-cover ring-1 ring-gray-200"
                         />
                     </div>
