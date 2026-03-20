@@ -10,16 +10,19 @@
 - [Demo](#demo)
 - [Features](#features)
 - [Tech stack](#tech-stack)
+- [Tooling requirements](#tooling-requirements)
 - [Prerequisites](#prerequisites)
 - [Quick start](#quick-start)
 - [Manual setup](#manual-setup)
-- [Environment variables](#environment-variables)
+- [Environment variables (minimum)](#environment-variables-minimum)
 - [Running tests](#running-tests)
 - [Git workflow](#git-workflow)
 - [Project structure](#project-structure)
 - [Block system](#block-system)
 - [Public page strategy](#public-page-strategy)
+- [Page goals](#page-goals)
 - [Contributing](#contributing)
+- [To Do](#to-do)
 
 ---
 
@@ -75,6 +78,18 @@ php artisan db:seed --class=DemoSeeder
 | Cache       | File cache (swap driver for Redis)      |
 | BE tests    | Pest PHP                                |
 | FE tests    | Vitest + Vue Test Utils                 |
+
+---
+
+## Tooling requirements
+
+Minimum tools to run the project locally:
+
+- PHP 8.2+
+- Composer 2.x
+- Node.js 18+
+- npm 9+
+- Database: MySQL 8 or SQLite
 
 ---
 
@@ -159,36 +174,29 @@ php artisan serve
 
 ---
 
-## Environment variables
+## Environment variables (minimum)
 
-Copy `.env.example` and adjust the values below. Everything else can stay as the default.
+Copy `.env.example` to `.env` and update only these keys:
 
 ```dotenv
-# Application
-APP_NAME="Page Builder"
+APP_NAME="PT eSponsor"
 APP_URL=http://localhost:8000
 
-# Database — MySQL
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_DATABASE=pagebuilder
+DB_DATABASE=pt_esponsor
 DB_USERNAME=root
 DB_PASSWORD=
 
-# Database — SQLite (alternative for local dev)
+# Quick local alternative
 # DB_CONNECTION=sqlite
 # DB_DATABASE=/absolute/path/to/database.sqlite
-
-# File storage
-FILESYSTEM_DISK=public
-
-# Cache (swap to redis for production)
-CACHE_DRIVER=file
-
-# Mail (only needed for password reset)
-MAIL_MAILER=log
 ```
+
+Notes:
+- `FILESYSTEM_DISK=public` already matches the avatar upload flow.
+- If you use SQLite, you do not need MySQL for local development.
 
 ---
 
@@ -376,6 +384,17 @@ that block).
 
 ---
 
+## Page goals
+
+- `/` (PublicHome): public landing page with login/register access.
+- `/register`: user signup and base site data (includes unique `slug`).
+- `/login`: access for registered users.
+- `/dashboard`: main editor to manage blocks.
+- `/dashboard/settings`: site configuration (name, slug, bio, avatar).
+- `/@{slug}`: creator's published public page.
+
+---
+
 ## Contributing
 
 1. Read `AGENT.md` fully before writing any code
@@ -386,6 +405,14 @@ that block).
    merged before moving the integration to `main`
 
 ---
+
+## To Do
+
+- [ ] Agregar tests E2E para drag and drop en bloques.
+- [ ] Mejorar accesibilidad de iconos en acciones del editor (tooltips + focus states).
+- [ ] Añadir validación visual en vivo para `slug` disponible en registro.
+- [ ] Documentar estrategia de cache invalidation al publicar.
+- [ ] Crear guía corta de despliegue en producción.
 
 ## License
 
