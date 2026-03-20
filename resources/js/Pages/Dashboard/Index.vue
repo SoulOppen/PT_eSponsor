@@ -78,27 +78,37 @@ async function handlePublish() {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex flex-wrap items-center justify-between gap-4">
-                <h2 class="text-xl font-semibold leading-tight text-gray-800">Editor de página</h2>
-                <div class="flex flex-wrap items-center gap-3">
-                    <span v-if="isDirty" class="text-sm text-amber-600">Cambios sin publicar</span>
-                    <a
-                        :href="publicUrl"
-                        target="_blank"
-                        rel="noopener"
-                        class="text-sm text-gray-600 underline hover:text-gray-900"
+            <!-- Mobile-first: columna en pantallas estrechas, fila desde sm -->
+            <div class="flex w-full flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <h2 class="text-lg font-semibold leading-snug text-gray-800 sm:text-xl">
+                    Editor de página
+                </h2>
+                <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-3">
+                    <p
+                        v-if="isDirty"
+                        class="order-first rounded-md bg-amber-50 px-3 py-2 text-center text-sm text-amber-800 sm:order-none sm:bg-transparent sm:px-0 sm:py-0"
                     >
-                        Ver público ↗
-                    </a>
-                    <Link
-                        href="/dashboard/settings"
-                        class="text-sm text-gray-600 underline hover:text-gray-900"
-                    >
-                        Ajustes del sitio
-                    </Link>
+                        Cambios sin publicar
+                    </p>
+                    <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-2">
+                        <a
+                            :href="publicUrl"
+                            target="_blank"
+                            rel="noopener"
+                            class="flex min-h-11 touch-manipulation items-center justify-center rounded-lg border border-gray-200 bg-white px-4 text-center text-sm font-medium text-gray-700 shadow-sm active:bg-gray-50 sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-2 sm:py-2 sm:shadow-none sm:underline"
+                        >
+                            Ver público ↗
+                        </a>
+                        <Link
+                            href="/dashboard/settings"
+                            class="flex min-h-11 touch-manipulation items-center justify-center rounded-lg border border-gray-200 bg-white px-4 text-center text-sm font-medium text-gray-700 shadow-sm active:bg-gray-50 sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-2 sm:py-2 sm:shadow-none sm:underline"
+                        >
+                            Ajustes del sitio
+                        </Link>
+                    </div>
                     <button
                         type="button"
-                        class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        class="min-h-11 w-full touch-manipulation rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow active:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto sm:py-2"
                         data-action="publish"
                         @click="handlePublish"
                     >
@@ -108,16 +118,18 @@ async function handlePublish() {
             </div>
         </template>
 
-        <div class="py-8">
-            <div class="mx-auto max-w-7xl space-y-10 sm:px-6 lg:px-8">
+        <!-- py-6 móvil primero; más aire en tablet+ -->
+        <div class="py-6 sm:py-8">
+            <div class="app-main-padding mx-auto max-w-7xl space-y-8 sm:space-y-10">
                 <section>
-                    <h3 class="mb-3 text-lg font-medium text-gray-900">Añadir bloque</h3>
+                    <h3 class="mb-3 text-base font-semibold text-gray-900 sm:text-lg">Añadir bloque</h3>
                     <BlockCatalog :schemas="blockSchemas" @select="handleAddType" />
                 </section>
 
-                <div class="grid gap-10 lg:grid-cols-2">
-                    <section>
-                        <h3 class="mb-3 text-lg font-medium text-gray-900">Tus bloques</h3>
+                <!-- Una columna por defecto; dos desde lg -->
+                <div class="grid gap-8 lg:grid-cols-2 lg:gap-10">
+                    <section class="min-w-0">
+                        <h3 class="mb-3 text-base font-semibold text-gray-900 sm:text-lg">Tus bloques</h3>
                         <BlockList
                             :blocks="sortedBlocks"
                             :block-schemas="blockSchemas"
@@ -127,9 +139,9 @@ async function handlePublish() {
                             @update-props="handleUpdateProps"
                         />
                     </section>
-                    <section>
-                        <h3 class="mb-3 text-lg font-medium text-gray-900">Vista previa</h3>
-                        <div class="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4">
+                    <section class="min-w-0">
+                        <h3 class="mb-3 text-base font-semibold text-gray-900 sm:text-lg">Vista previa</h3>
+                        <div class="overflow-x-auto rounded-lg border border-dashed border-gray-300 bg-gray-50 p-3 sm:p-4">
                             <PreviewFrame :blocks="sortedBlocks" :site="site" />
                         </div>
                     </section>

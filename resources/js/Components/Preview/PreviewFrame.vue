@@ -14,13 +14,15 @@ const visibleBlocks = computed(() =>
 </script>
 
 <template>
-    <div class="preview-frame">
+    <div
+        class="preview-frame w-full min-w-0 max-w-full overflow-x-auto break-words text-gray-900 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-md"
+    >
         <template v-for="b in visibleBlocks" :key="b.id">
-            <div v-if="b.type === 'text'" :data-block-type="b.type">
+            <div v-if="b.type === 'text'" class="mb-3 text-base leading-relaxed sm:text-sm" :data-block-type="b.type">
                 {{ b.props?.content }}
             </div>
-            <div v-else-if="b.type === 'image'" :data-block-type="b.type">
-                <img :src="b.props?.url" :alt="b.props?.alt || ''" />
+            <div v-else-if="b.type === 'image'" class="mb-3" :data-block-type="b.type">
+                <img class="block max-h-[60vh] w-auto object-contain" :src="b.props?.url" :alt="b.props?.alt || ''" />
             </div>
         </template>
     </div>

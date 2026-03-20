@@ -17,7 +17,7 @@ function updateKey(key, val) {
 </script>
 
 <template>
-    <div class="block-editor">
+    <div class="block-editor w-full min-w-0 space-y-4">
         <FieldRenderer
             v-for="f in fields"
             :key="f.key"

@@ -18,11 +18,11 @@ function toggleExpand(id) {
 </script>
 
 <template>
-    <div class="block-list space-y-4">
+    <div class="block-list space-y-3 sm:space-y-4">
         <div
             v-for="block in blocks"
             :key="block.id"
-            class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
+            class="rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:p-4"
         >
             <BlockCard
                 :block="block"
@@ -33,7 +33,7 @@ function toggleExpand(id) {
             <button
                 v-if="blockSchemas[block.type]?.fields?.length"
                 type="button"
-                class="mt-2 text-sm text-indigo-600 hover:text-indigo-800"
+                class="mt-3 flex min-h-11 w-full touch-manipulation items-center justify-center rounded-lg text-sm font-medium text-indigo-600 ring-1 ring-indigo-200 active:bg-indigo-50 sm:mt-2 sm:w-auto sm:justify-start sm:bg-transparent sm:px-0 sm:py-2 sm:ring-0"
                 data-action="expand-editor"
                 @click="toggleExpand(block.id)"
             >
@@ -41,7 +41,7 @@ function toggleExpand(id) {
             </button>
             <BlockEditor
                 v-if="expandedId === block.id && blockSchemas[block.type]"
-                class="mt-4"
+                class="mt-4 w-full min-w-0"
                 :schema="blockSchemas[block.type]"
                 :model-value="block.props || {}"
                 @update:model-value="emit('update-props', block.id, $event)"
