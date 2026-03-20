@@ -7,11 +7,8 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-    ]);
-});
+    return Inertia::render('PublicHome');
+})->name('home');
 
 Route::get('/@{slug}', [PublicPageController::class, 'show'])->where('slug', '[a-z0-9\-]+');
 
