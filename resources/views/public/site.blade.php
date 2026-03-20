@@ -12,23 +12,35 @@
         <meta property="og:image" content="{{ $site->avatar_url }}">
     @endif
     <style>
-        body { font-family: system-ui, sans-serif; margin: 1rem; max-width: 42rem; }
-        img { max-width: 100%; height: auto; }
-        iframe { max-width: 100%; }
+        body { font-family: system-ui, -apple-system, Segoe UI, sans-serif; margin: 0; line-height: 1.5; color: #111; }
+        main { margin: 0 auto; padding: 1.25rem; max-width: 40rem; }
+        img { max-width: 100%; height: auto; display: block; }
+        iframe { max-width: 100%; border: 0; }
     </style>
 </head>
 <body>
 <main>
-    <h1>{{ $site->name }}</h1>
-    @if($site->bio)
-        <p>{{ $site->bio }}</p>
-    @endif
-    @foreach($blocks as $block)
-        @php($view = 'public.blocks._'.$block->type)
-        @if(view()->exists($view))
-            @include($view, ['block' => $block])
+    <header style="margin-bottom: 1.5rem;">
+        <h1 style="margin: 0 0 0.5rem; font-size: 1.75rem;">{{ $site->name }}</h1>
+        @if($site->bio)
+            <p style="margin: 0; color: #444;">{{ $site->bio }}</p>
         @endif
-    @endforeach
+    </header>
+
+    @forelse($blocks as $block)
+        @php
+            $partial = 'public.blocks._' . $block->type;
+        @endphp
+        @if(view()->exists($partial))
+            <article style="margin-bottom: 1.5rem;">
+                @include($partial, ['block' => $block])
+            </article>
+        @else
+            {{-- Tipo sin plantilla Blade (p. ej. migración futura) --}}
+        @endif
+    @empty
+        <p style="color: #666;">Aún no hay bloques publicados en esta página.</p>
+    @endforelse
 </main>
 </body>
 </html>
