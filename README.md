@@ -104,7 +104,7 @@ Minimum tools to run the project locally:
 | MySQL      | 8.0             | `mysql --version`        |
 
 > **Tip:** SQLite works fine for local dev. Set `DB_CONNECTION=sqlite` in `.env`
-> and skip MySQL entirely — the quick start script handles it automatically.
+> and skip MySQL entirely.
 
 ---
 
@@ -114,29 +114,30 @@ The fastest path from a clean clone to a running app:
 
 ```bash
 # 1. Clone
-git clone https://github.com/your-org/page-builder.git
-cd page-builder
+git clone https://github.com/SoulOppen/PT_eSponsor.git
+cd PT_eSponsor
 
-# 2. Make scripts executable
-chmod +x bin/quickstart.sh bin/commit-step.sh
+# 2. Install dependencies
+composer install
+npm install
 
-# 3. Run setup (includes migrate + asset build + full test suite)
-./bin/quickstart.sh
+# 3. Environment and app key
+cp .env.example .env
+php artisan key:generate
 
-# 4. (Optional) Seed demo data
-./bin/quickstart.sh --seed-demo
+# 4. Database
+php artisan migrate
 
-# 5. Start the servers in two terminals
+# 5. (Optional) Seed demo data
+php artisan db:seed --class=DemoSeeder
+
+# 6. Storage symlink for avatar/public files
+php artisan storage:link
+
+# 7. Start the servers in two terminals
 php artisan serve      # → http://localhost:8000
 npm run dev            # → Vite HMR on port 5173
 ```
-
-### Script flags
-
-| Flag           | Effect                                             |
-|----------------|----------------------------------------------------|
-| `--seed-demo`  | Runs `DemoSeeder` and prints demo credentials      |
-| `--skip-npm`   | Skips `npm install` + build (useful in CI)         |
 
 ---
 
@@ -233,7 +234,6 @@ php artisan test --stop-on-failure && npm run test:run
 
 ## Git workflow
 
-This project uses a strict commit discipline enforced by `bin/commit-step.sh`.
 Read `AGENT.md` for the full protocol. Summary:
 
 ### Branch model
@@ -251,20 +251,15 @@ main        ← protected; receives merges from develop only
 
 - One commit per `####` section in `AGENT.md` — no bundling, no splitting
 - Commit message must match the section header **exactly**
-- Tests must be green **before** every commit — use the helper:
+- Tests must be green **before** every commit.
 
 ```bash
-./bin/commit-step.sh "feat: block CRUD endpoints"
+php artisan test --stop-on-failure
+npm run test:run
+git add -A
+git commit -m "feat: your message"
+git push origin HEAD
 ```
-
-The helper will:
-1. Run `php artisan test --stop-on-failure`
-2. Run `npm run test:run`
-3. `git add -A`
-4. `git commit -m "<your message>"`
-5. `git push origin HEAD`
-
-It aborts with a non-zero exit code if any step fails, so CI will also catch it.
 
 ### Commit message format
 
@@ -301,9 +296,6 @@ Types: feat | fix | refactor | test | docs | chore | style | perf
 │   └── Policies/
 │       ├── SitePolicy.php
 │       └── BlockPolicy.php
-├── bin/
-│   ├── quickstart.sh                     # Full environment setup
-│   └── commit-step.sh                    # Test → stage → commit → push
 ├── config/
 │   └── blocks.php                        # Block type schemas (PHP arrays)
 ├── database/
@@ -399,8 +391,7 @@ that block).
 
 1. Read `AGENT.md` fully before writing any code
 2. Branch off `develop` following the naming convention (`be/phase-X`, `fe/phase-X`)
-3. Use `./bin/commit-step.sh "<message>"` for every commit — direct `git commit` is
-   strongly discouraged because it bypasses the test gate
+3. Run backend + frontend tests before each commit
 4. Open a PR into `develop` when a phase is complete; both BE and FE phases must be
    merged before moving the integration to `main`
 
