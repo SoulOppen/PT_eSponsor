@@ -20,7 +20,18 @@ return [
             'icon' => 'link',
             'fields' => [
                 ['key' => 'title', 'type' => 'text', 'label' => 'Título', 'required' => true],
-                ['key' => 'url', 'type' => 'url', 'label' => 'URL', 'required' => true],
+                [
+                    'key' => 'items',
+                    'type' => 'repeater',
+                    'label' => 'Enlaces',
+                    'required' => true,
+                    'subfields' => [
+                        ['key' => 'label', 'type' => 'text', 'label' => 'Texto del botón'],
+                        ['key' => 'url', 'type' => 'url', 'label' => 'URL'],
+                    ],
+                ],
+                ['key' => 'color', 'type' => 'color', 'label' => 'Color fondo', 'default' => '#1e293b'],
+                ['key' => 'text_color', 'type' => 'color', 'label' => 'Color texto', 'default' => '#ffffff'],
             ],
         ],
         'image' => [
@@ -42,14 +53,29 @@ return [
             'label' => 'Redes sociales',
             'icon' => 'social',
             'fields' => [
-                ['key' => 'links', 'type' => 'repeater', 'label' => 'Enlaces'],
+                [
+                    'key' => 'links',
+                    'type' => 'repeater',
+                    'label' => 'Enlaces',
+                    'required' => false,
+                    'subfields' => [
+                        ['key' => 'label', 'type' => 'text', 'label' => 'Nombre / red'],
+                        ['key' => 'url', 'type' => 'url', 'label' => 'URL'],
+                    ],
+                ],
             ],
         ],
         'music' => [
             'label' => 'Música',
             'icon' => 'music',
             'fields' => [
-                ['key' => 'platform', 'type' => 'text', 'label' => 'Plataforma', 'required' => true],
+                [
+                    'key' => 'platform',
+                    'type' => 'select',
+                    'label' => 'Plataforma',
+                    'required' => true,
+                    'options' => ['spotify', 'bandcamp', 'soundcloud'],
+                ],
                 ['key' => 'url', 'type' => 'url', 'label' => 'URL', 'required' => true],
             ],
         ],

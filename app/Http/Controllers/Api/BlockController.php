@@ -51,8 +51,7 @@ class BlockController extends Controller
 
     public function update(Request $request, Block $block, BlockSchemaRegistry $registry): JsonResponse
     {
-        $site = $this->userSite($request);
-        $this->authorizeBlock($site, $block);
+        $this->authorize('update', $block);
 
         $validated = $request->validate([
             'props' => ['required', 'array'],
@@ -67,8 +66,7 @@ class BlockController extends Controller
 
     public function destroy(Request $request, Block $block): Response
     {
-        $site = $this->userSite($request);
-        $this->authorizeBlock($site, $block);
+        $this->authorize('delete', $block);
         $block->delete();
 
         return response()->noContent();
@@ -100,8 +98,8 @@ class BlockController extends Controller
 
     public function duplicate(Request $request, Block $block): JsonResponse
     {
+        $this->authorize('update', $block);
         $site = $this->userSite($request);
-        $this->authorizeBlock($site, $block);
 
         $nextOrder = $site->blocks()->max('order');
         $order = $nextOrder === null ? 0 : ((int) $nextOrder + 1);
@@ -116,8 +114,7 @@ class BlockController extends Controller
 
     public function toggle(Request $request, Block $block): JsonResponse
     {
-        $site = $this->userSite($request);
-        $this->authorizeBlock($site, $block);
+        $this->authorize('update', $block);
 
         $block->update(['is_active' => ! $block->is_active]);
 
@@ -147,9 +144,25 @@ class BlockController extends Controller
         return $site;
     }
 
-    private function authorizeBlock(Site $site, Block $block): void
+    /**
+     * @param  array<string, mixed>  $sub
+     * @return array<int, string>
+     */
+    private function validationRulesForSubfield(array $sub, bool $repeaterRequired): array
     {
-        abort_if((int) $block->site_id !== (int) $site->id, 403);
+        $subRequired = $repeaterRequired;
+
+        return match ($sub['type'] ?? 'text') {
+            'url' => $subRequired
+                ? ['required', 'url']
+                : ['sometimes', 'nullable', 'url'],
+            'text', 'textarea' => $subRequired
+                ? ['required', 'string']
+                : ['sometimes', 'nullable', 'string'],
+            default => $subRequired
+                ? ['required', 'string']
+                : ['sometimes', 'nullable', 'string'],
+        };
     }
 
     /**
@@ -194,8 +207,13 @@ class BlockController extends Controller
                     break;
                 case 'repeater':
                     $rules[$path] = $required
-                        ? ['required', 'array']
+                        ? ['required', 'array', 'min:1']
                         : ['sometimes', 'nullable', 'array'];
+                    foreach ($field['subfields'] ?? [] as $sub) {
+                        $sk = "{$path}.*.".$sub['key'];
+                        $subRules = $this->validationRulesForSubfield($sub, $required);
+                        $rules[$sk] = $subRules;
+                    }
                     break;
                 default:
                     $rules[$path] = ['sometimes', 'nullable'];

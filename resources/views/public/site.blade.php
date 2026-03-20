@@ -11,6 +11,11 @@
     @if($site->avatar_url)
         <meta property="og:image" content="{{ $site->avatar_url }}">
     @endif
+    <style>
+        body { font-family: system-ui, sans-serif; margin: 1rem; max-width: 42rem; }
+        img { max-width: 100%; height: auto; }
+        iframe { max-width: 100%; }
+    </style>
 </head>
 <body>
 <main>
@@ -19,8 +24,9 @@
         <p>{{ $site->bio }}</p>
     @endif
     @foreach($blocks as $block)
-        @if($block->type === 'text' && !empty($block->props['content']))
-            <p>{{ $block->props['content'] }}</p>
+        @php($view = 'public.blocks._'.$block->type)
+        @if(view()->exists($view))
+            @include($view, ['block' => $block])
         @endif
     @endforeach
 </main>

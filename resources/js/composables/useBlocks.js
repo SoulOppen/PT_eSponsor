@@ -72,5 +72,31 @@ export function useBlocks(initialBlocks = []) {
         if (idx !== -1 && json.data) blocks.value[idx] = { ...blocks.value[idx], ...json.data }
     }
 
-    return { blocks, sortedBlocks, addBlock, removeBlock, toggleBlock, duplicateBlock, updateBlock }
+    /**
+     * @param {number[]} orderedIds Block ids in desired order (index = order)
+     */
+    async function reorderBlocks(orderedIds) {
+        const rows = orderedIds.map((id, order) => ({ id: Number(id), order }))
+        const res = await apiJson('/api/blocks/reorder', {
+            method: 'POST',
+            body: JSON.stringify({ blocks: rows }),
+        })
+        if (!res.ok) return
+        const orderById = Object.fromEntries(orderedIds.map((id, i) => [Number(id), i]))
+        blocks.value = blocks.value.map((b) => ({
+            ...b,
+            order: orderById[b.id] ?? b.order,
+        }))
+    }
+
+    return {
+        blocks,
+        sortedBlocks,
+        addBlock,
+        removeBlock,
+        toggleBlock,
+        duplicateBlock,
+        updateBlock,
+        reorderBlocks,
+    }
 }

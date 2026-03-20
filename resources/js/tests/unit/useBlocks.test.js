@@ -54,4 +54,21 @@ describe('useBlocks', () => {
         await toggleBlock(1)
         expect(blocks.value[0].is_active).toBe(false)
     })
+
+    it('reorderBlocks updates order via API', async () => {
+        fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ ok: true }) })
+        const { blocks, reorderBlocks } = useBlocks([
+            { id: 1, type: 'text', props: {}, order: 0 },
+            { id: 2, type: 'text', props: {}, order: 1 },
+        ])
+        await reorderBlocks([2, 1])
+        expect(fetch).toHaveBeenCalledWith(
+            '/api/blocks/reorder',
+            expect.objectContaining({
+                method: 'POST',
+            }),
+        )
+        expect(blocks.value.find((b) => b.id === 2).order).toBe(0)
+        expect(blocks.value.find((b) => b.id === 1).order).toBe(1)
+    })
 })

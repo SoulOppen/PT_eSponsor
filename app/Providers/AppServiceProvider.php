@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\Block;
+use App\Policies\BlockPolicy;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
@@ -25,5 +28,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Vite::prefetch(concurrency: 3);
+
+        Gate::policy(Block::class, BlockPolicy::class);
     }
 }

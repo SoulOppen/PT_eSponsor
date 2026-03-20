@@ -29,7 +29,14 @@ class DemoSeeder extends Seeder
 
         $definitions = [
             ['type' => 'text', 'order' => 0, 'props' => ['content' => 'Bienvenido al sitio demo.']],
-            ['type' => 'links', 'order' => 1, 'props' => ['title' => 'Mi enlace', 'url' => 'https://example.com']],
+            ['type' => 'links', 'order' => 1, 'props' => [
+                'title' => 'Enlaces',
+                'items' => [
+                    ['label' => 'Web', 'url' => 'https://example.com'],
+                ],
+                'color' => '#1e293b',
+                'text_color' => '#ffffff',
+            ]],
             ['type' => 'image', 'order' => 2, 'props' => ['url' => 'https://placehold.co/600x400/png', 'alt' => 'Placeholder']],
             ['type' => 'video', 'order' => 3, 'props' => ['url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ']],
         ];

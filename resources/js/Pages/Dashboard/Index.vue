@@ -24,7 +24,21 @@ function defaultPropsForType(type) {
         } else if (f.type === 'color') {
             out[f.key] = f.default || '#000000'
         } else if (f.type === 'repeater') {
-            out[f.key] = []
+            const row = {}
+            for (const s of f.subfields || []) {
+                row[s.key] = s.type === 'url' ? 'https://example.com' : 'Nuevo'
+            }
+            out[f.key] = f.required ? [row] : []
+        } else if (type === 'music' && f.key === 'url') {
+            out[f.key] = 'https://open.spotify.com/track/6rqhFgbbKwnb9MLmUQDhG6'
+        } else if (type === 'text' && f.key === 'content') {
+            out[f.key] = 'Nuevo texto'
+        } else if (type === 'links' && f.key === 'title') {
+            out[f.key] = 'Mis enlaces'
+        } else if (type === 'video' && f.key === 'url') {
+            out[f.key] = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+        } else if (type === 'image' && f.key === 'url') {
+            out[f.key] = 'https://placehold.co/600x400/png'
         } else {
             out[f.key] = ''
         }
@@ -37,7 +51,7 @@ const initialBlocks = props.blocks.map((b) => ({
     props: { ...(b.props || {}) },
 }))
 
-const { sortedBlocks, addBlock, removeBlock, toggleBlock, duplicateBlock, updateBlock } =
+const { sortedBlocks, addBlock, removeBlock, toggleBlock, duplicateBlock, updateBlock, reorderBlocks } =
     useBlocks(initialBlocks)
 const { isDirty, markDirty, publish } = usePublish()
 
@@ -70,6 +84,11 @@ async function handleUpdateProps(id, newProps) {
 
 async function handlePublish() {
     await publish()
+}
+
+async function handleReorder(orderedIds) {
+    await reorderBlocks(orderedIds)
+    markDirty()
 }
 </script>
 
@@ -137,6 +156,7 @@ async function handlePublish() {
                             @toggle="handleToggle"
                             @duplicate="handleDuplicate"
                             @update-props="handleUpdateProps"
+                            @reorder="handleReorder"
                         />
                     </section>
                     <section class="min-w-0">
