@@ -12,8 +12,7 @@
             }
         }
         $personName = $site->user?->name ?? $site->name;
-        $publicSiteName = $site->name;
-        $documentTitle = $personName.' - '.$publicSiteName;
+        $documentTitle = $personName.' - '.config('app.name');
         $bioPlain = trim((string) ($site->bio ?? ''));
         $metaDescription = $bioPlain !== ''
             ? \Illuminate\Support\Str::limit(strip_tags($bioPlain), 320, '')

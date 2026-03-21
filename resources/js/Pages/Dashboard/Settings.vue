@@ -330,6 +330,11 @@ async function saveProfile() {
                             rows="4"
                             class="min-h-[7rem] w-full touch-manipulation rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                         />
+                        <p class="mt-1.5 text-xs text-gray-500">
+                            Esta bio es el texto que ves bajo el nombre en tu página pública y también se usa como
+                            <span class="font-medium">descripción meta (SEO)</span> en <code class="text-gray-600">/@{{ form.slug || 'tu-slug' }}</code>
+                            (si la dejas vacía, se usa el texto por defecto de la plataforma).
+                        </p>
                     </div>
                     <div>
                         <label class="mb-2 block text-sm font-medium text-gray-700" for="site-avatar">Avatar</label>

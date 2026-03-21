@@ -2,12 +2,13 @@
 
 use App\Models\User;
 
-it('public page title is person name hyphen public site name', function () {
+it('public page title is person name hyphen platform name', function () {
     User::factory()
         ->state(['name' => 'Ada Lovelace'])
         ->hasSite(['slug' => 'grace', 'name' => 'Mi página pública'])
         ->create();
-    $this->get('/@grace')->assertSee('<title>Ada Lovelace - Mi página pública</title>', false);
+    $expected = '<title>Ada Lovelace - '.e(config('app.name')).'</title>';
+    $this->get('/@grace')->assertSee($expected, false);
 });
 
 it('public page og:title matches document title', function () {
@@ -17,7 +18,7 @@ it('public page og:title matches document title', function () {
         ->create();
     $this->get('/@grace')
         ->assertSee('property="og:title"', false)
-        ->assertSee('Ada Lovelace - Mi página pública', false);
+        ->assertSee('Ada Lovelace - '.config('app.name'), false);
 });
 
 it('public page uses bio as meta and og:description when bio is set', function () {
@@ -25,6 +26,23 @@ it('public page uses bio as meta and og:description when bio is set', function (
     $this->get('/@grace')
         ->assertSee('name="description"', false)
         ->assertSee('Pioneer of computing', false)
+        ->assertSee('property="og:description"', false);
+});
+
+it('public page meta description reflects bio after JSON profile patch', function () {
+    $user = User::factory()->hasSite(['slug' => 'grace', 'bio' => null])->create();
+    $this->actingAs($user)
+        ->patchJson('/api/profile', [
+            'name' => $user->name,
+            'slug' => 'grace',
+            'bio' => 'Texto de bio para meta description',
+            'remove_avatar' => false,
+        ])
+        ->assertOk();
+
+    $this->get('/@grace')
+        ->assertSee('name="description"', false)
+        ->assertSee('Texto de bio para meta description', false)
         ->assertSee('property="og:description"', false);
 });
 

@@ -9,7 +9,10 @@ it('authenticated user can update their profile', function () {
     $this->actingAs($user)
         ->patch('/api/profile', ['name' => 'New Name', 'bio' => 'Bio', 'slug' => 'new-slug'])
         ->assertOk();
-    expect($user->site->fresh()->slug)->toBe('new-slug');
+    $site = $user->site->fresh();
+    expect($site->slug)->toBe('new-slug');
+    expect($site->name)->toBe('New Name');
+    expect($site->bio)->toBe('Bio');
 });
 
 it('slug must be unique across sites', function () {

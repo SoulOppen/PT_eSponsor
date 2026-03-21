@@ -1189,12 +1189,13 @@ describe('usePublish', () => {
 
 **`tests/Feature/Phase5/SeoMetaTest.php`**
 ```php
-it('public page title is person name hyphen public site name', function () {
+it('public page title is person name hyphen platform name', function () {
     User::factory()
         ->state(['name' => 'Ada Lovelace'])
         ->hasSite(['slug' => 'grace', 'name' => 'Mi página pública'])
         ->create();
-    $this->get('/@grace')->assertSee('<title>Ada Lovelace - Mi página pública</title>', false);
+    $expected = '<title>Ada Lovelace - '.e(config('app.name')).'</title>';
+    $this->get('/@grace')->assertSee($expected, false);
 });
 
 it('public page og:title matches document title', function () {
@@ -1204,7 +1205,7 @@ it('public page og:title matches document title', function () {
         ->create();
     $this->get('/@grace')
          ->assertSee('property="og:title"', false)
-         ->assertSee('Ada Lovelace - Mi página pública', false);
+         ->assertSee('Ada Lovelace - '.config('app.name'), false);
 });
 
 it('public page uses bio as meta and og:description when bio is set', function () {
@@ -1395,7 +1396,7 @@ npm run test:run                     # must be 0 failures
 - Faster TTFB, no JS framework boot.
 - Fully crawlable HTML.
 - `Cache::remember("public.site.$slug", 300, ...)` — invalidated on publish.
-- `<title>` / `og:title`: `{user.name} - {site.name}`; `meta description` / `og:description`: site bio or `config('seo.default_description')`.
+- `<title>` / `og:title`: `{user.name} - {app.name}` (plataforma); `meta description` / `og:description`: site bio or `config('seo.default_description')`.
 
 ---
 
