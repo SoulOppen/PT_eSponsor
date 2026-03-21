@@ -49,7 +49,7 @@ php artisan db:seed --class=DemoSeeder
 - **Schema-driven** — every block type declares its own field schema; inputs are rendered dynamically
 - **Live preview** — side-by-side editor and preview on desktop, toggle on mobile
 - **Draft / publish** — edit in draft, publish when ready; public URL always shows the published version
-- **Public page** — fast Blade-rendered view at `/@{slug}`, cached at the Laravel layer, no JS bundle
+- **Public page** — Blade en `/@{slug}` sin bundle del editor; datos desde BD. Claves `public_site:{slug}` se invalidan al publicar y al guardar perfil (listas para caché futura si se añade `Cache::remember`)
 - **SEO** — pública `/@slug`: título `Nombre de la persona - Nombre de la plataforma` (`APP_NAME`), descripción = bio (o texto por defecto `config/seo.php` / `SEO_DEFAULT_DESCRIPTION`); Inertia: meta description por defecto en `app.blade.php`
 
 ### Block catalogue (MVP)
@@ -198,6 +198,7 @@ DB_PASSWORD=
 Notes:
 - `FILESYSTEM_DISK=public` already matches the avatar upload flow.
 - If you use SQLite, you do not need MySQL for local development.
+- Opcional: `SEO_DEFAULT_DESCRIPTION` en `.env` (ver `config/seo.php`) para la meta description por defecto.
 
 ---
 
@@ -273,59 +274,74 @@ Types: feat | fix | refactor | test | docs | chore | style | perf
 
 ## Project structure
 
+Árbol orientativo (omitidos `vendor/`, `node_modules/`, `public/build/`, etc.):
+
 ```
 ├── app/
 │   ├── Http/
 │   │   ├── Controllers/
-│   │   │   ├── BlockController.php       # Block CRUD + reorder + duplicate
-│   │   │   ├── ProfileController.php     # Profile + site settings
-│   │   │   ├── PublishController.php     # Draft → published
-│   │   │   └── PublicPageController.php  # /@slug Blade render (cached)
-│   │   ├── Requests/
-│   │   │   ├── BlockRequest.php          # Validates props against schema
-│   │   │   └── UpdateProfileRequest.php
-│   │   └── Resources/
-│   │       ├── BlockResource.php
-│   │       └── SiteResource.php
+│   │   │   ├── DashboardController.php       # /dashboard, /dashboard/settings (Inertia)
+│   │   │   ├── PublicPageController.php      # /@slug → Blade
+│   │   │   ├── ProfileController.php         # Perfil Breeze (Inertia, rutas web)
+│   │   │   ├── Api/
+│   │   │   │   ├── BlockController.php       # CRUD, reorder, duplicate, toggle
+│   │   │   │   ├── BlockSchemaController.php # GET /api/block-schemas
+│   │   │   │   ├── ProfileController.php     # PATCH /api/profile (JSON + avatar multipart)
+│   │   │   │   └── SitePublishController.php # POST /api/site/publish
+│   │   │   └── Auth/                         # Login, registro, verificación… (Breeze)
+│   │   ├── Middleware/
+│   │   │   ├── AcceptJson.php                # Accept: application/json en API
+│   │   │   └── HandleInertiaRequests.php
+│   │   └── Requests/
+│   │       ├── Auth/LoginRequest.php
+│   │       └── ProfileUpdateRequest.php      # Formulario perfil Breeze
 │   ├── Models/
 │   │   ├── User.php
-│   │   ├── Site.php                      # hasMany blocks, belongsTo user
-│   │   └── Block.php                     # props cast to array (JSON column)
-│   ├── Services/
-│   │   └── BlockSchemaRegistry.php       # Single source of truth for schemas
-│   └── Policies/
-│       ├── SitePolicy.php
-│       └── BlockPolicy.php
+│   │   ├── Site.php                          # belongsTo user, hasMany blocks
+│   │   └── Block.php                         # props → array (JSON)
+│   ├── Policies/
+│   │   └── BlockPolicy.php
+│   ├── Providers/
+│   └── Services/
+│       └── BlockSchemaRegistry.php           # Lee config/blocks.php
+├── bootstrap/
+│   └── app.php                               # Rutas web + api + middleware
 ├── config/
-│   └── blocks.php                        # Block type schemas (PHP arrays)
+│   ├── blocks.php                            # Esquemas por tipo de bloque
+│   └── seo.php                               # Meta description por defecto
 ├── database/
+│   ├── factories/                            # User, Site, Block
 │   ├── migrations/
-│   └── seeders/
-│       └── DemoSeeder.php
+│   └── seeders/                              # DatabaseSeeder, DemoSeeder
 ├── resources/
 │   ├── js/
-│   │   ├── Pages/Dashboard/
-│   │   │   ├── Index.vue                 # Two-column editor layout
-│   │   │   └── Settings.vue
+│   │   ├── Pages/                            # PublicHome, Auth/*, Dashboard/*, Profile/*
 │   │   ├── Components/
-│   │   │   ├── Editor/                   # BlockList, BlockCard, BlockEditor,
-│   │   │   │                             # BlockCatalog, FieldRenderer
-│   │   │   ├── Preview/PreviewFrame.vue  # Live preview (same composable as editor)
-│   │   │   └── Blocks/                   # Public block renderers (BlockLinks, etc.)
-│   │   ├── composables/
-│   │   │   ├── useBlocks.js              # All block state + API calls
-│   │   │   └── usePublish.js             # Dirty flag + publish action
-│   │   └── tests/                        # Vitest unit + component tests
-│   └── views/public/
-│       ├── page.blade.php                # Public page shell (no Vue bundle)
-│       └── blocks/                       # Blade partials per block type
+│   │   │   ├── Editor/                       # BlockList, BlockCard, BlockEditor, …
+│   │   │   ├── Preview/PreviewFrame.vue
+│   │   │   └── Blocks/                       # Vista previa por tipo (BlockLinks, …)
+│   │   ├── composables/                      # useBlocks.js, usePublish.js
+│   │   ├── Layouts/
+│   │   └── tests/                            # Vitest (componentes + composables)
+│   ├── css/
+│   └── views/
+│       ├── app.blade.php                     # Shell Inertia + meta por defecto
+│       └── public/
+│           ├── site.blade.php                # HTML público /@slug (SEO + bloques)
+│           └── blocks/                       # _<tipo>.blade.php (reciben $block)
 ├── routes/
-│   ├── web.php                           # Dashboard + /@slug
-│   └── api.php                           # Block CRUD (auth:sanctum)
+│   ├── web.php                               # /, /@slug, /dashboard, Breeze perfil
+│   ├── api.php                               # prefijo /api; middleware web + auth + verified
+│   └── auth.php
 └── tests/
-    ├── Feature/Phase1/ … Phase6/
+    ├── Feature/                              # Auth/, Phase1/ … Phase6/
     └── Unit/
 ```
+
+**Notas rápidas**
+
+- La API bajo `/api/*` usa **sesión web** (cookies + CSRF), igual que Inertia; no hace falta token Sanctum para el editor.
+- La validación de `props` frente al esquema vive en `Api\BlockController` (no hay `FormRequest` dedicado ni `JsonResource` para bloques).
 
 ---
 
@@ -351,8 +367,8 @@ dynamically — **no block-specific code lives in the frontend**.
 
 Adding a new block type requires:
 1. Adding an entry to `config/blocks.php`
-2. Creating a Blade partial at `resources/views/public/blocks/_<type>.blade.php`
-3. Creating a Vue renderer at `resources/js/Components/Blocks/Block<Type>.vue`
+2. Creating a Blade partial at `resources/views/public/blocks/_<type>.blade.php` (la vista incluye el partial con `['block' => $block]`; usa `$block->props`, etc.)
+3. Creating a Vue renderer at `resources/js/Components/Blocks/Block<Type>.vue` (vista previa / catálogo en el editor)
 
 No migrations needed — props are stored as JSON in the `blocks.props` column.
 
@@ -367,12 +383,10 @@ Blade view — no Inertia, no Vue bundle on the wire.
 
 - Zero JS framework boot time → faster First Contentful Paint
 - Fully server-rendered HTML → crawlable by search engines without a JS runtime
-- Cacheable at the Laravel layer: `Cache::remember("public.site.$slug", 300, fn()...)`
-- Cache is invalidated automatically when the user clicks "Publish"
+- Hoy cada `GET /@slug` carga el `Site` y los bloques publicados desde la **base de datos** (sin `Cache::remember` en el controlador). Existe la convención de clave `public_site:{slug}` y se hace `Cache::forget` al **publicar** y al **guardar perfil**, para cuando se quiera envolver la respuesta en caché.
 
 Each block type has a dedicated Blade partial in `resources/views/public/blocks/`.
-The only variable passed to each partial is `$block->props` (the JSON array for
-that block).
+Each partial receives the full **`$block`** model (p. ej. `$block->props`, `$block->type`).
 
 ---
 
@@ -402,7 +416,7 @@ that block).
 - [ ] Agregar tests E2E para drag and drop en bloques.
 - [ ] Mejorar accesibilidad de iconos en acciones del editor (tooltips + focus states).
 - [ ] Añadir validación visual en vivo para `slug` disponible en registro.
-- [ ] Documentar estrategia de cache invalidation al publicar.
+- [ ] Actualizar `AGENT.md` con la invalidación de `public_site:{slug}` al publicar/perfil (resumen en este README).
 - [ ] Crear guía corta de despliegue en producción.
 
 ## License
