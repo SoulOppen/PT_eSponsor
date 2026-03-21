@@ -4,16 +4,22 @@ use App\Models\User;
 
 it('user can register with valid data', function () {
     $this->post('/register', [
-        'name' => 'Ana García', 'email' => 'ana@example.com',
-        'password' => 'password', 'password_confirmation' => 'password',
+        'name' => 'Ana García',
+        'email' => 'ana@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+        'slug' => 'ana-garcia',
     ])->assertRedirect('/dashboard');
     expect(User::where('email', 'ana@example.com')->exists())->toBeTrue();
 });
 
 it('a site is automatically created on registration', function () {
     $this->post('/register', [
-        'name' => 'Ana', 'email' => 'ana@example.com',
-        'password' => 'password', 'password_confirmation' => 'password',
+        'name' => 'Ana',
+        'email' => 'ana@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+        'slug' => 'ana',
     ]);
     $user = User::where('email', 'ana@example.com')->first();
     expect($user->site)->not->toBeNull();
@@ -21,8 +27,11 @@ it('a site is automatically created on registration', function () {
 
 it('auto-generated slug is url-safe', function () {
     $this->post('/register', [
-        'name' => 'Ana García', 'email' => 'a@b.com',
-        'password' => 'password', 'password_confirmation' => 'password',
+        'name' => 'Ana García',
+        'email' => 'a@b.com',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+        'slug' => 'ana-garcia-url',
     ]);
     $slug = User::where('email', 'a@b.com')->first()->site->slug;
     expect($slug)->toMatch('/^[a-z0-9\-]+$/');

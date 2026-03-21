@@ -57,6 +57,53 @@ const nextAvatarDisplay = computed(() => {
     return avatarPreviewUrl.value || ''
 })
 
+const savedName = computed(() => props.site?.name ?? '')
+const savedSlug = computed(() => props.site?.slug ?? '')
+const savedBio = computed(() => props.site?.bio ?? '')
+
+const nameDirty = computed(() => form.name !== savedName.value)
+const slugDirty = computed(() => form.slug !== savedSlug.value)
+const bioDirty = computed(() => form.bio !== savedBio.value)
+/** Cambios pendientes respecto al avatar guardado (archivo nuevo o borrado pendiente). */
+const avatarDirty = computed(
+    () => !!avatarFile.value || (!!avatarPreviewUrl.value && removeAvatar.value),
+)
+
+const hasPendingChanges = computed(
+    () => nameDirty.value || slugDirty.value || bioDirty.value || avatarDirty.value,
+)
+
+function resetName() {
+    form.name = savedName.value
+}
+
+function resetSlug() {
+    form.slug = savedSlug.value
+}
+
+function resetBio() {
+    form.bio = savedBio.value
+}
+
+function resetAvatar() {
+    if (selectedAvatarPreview.value) {
+        URL.revokeObjectURL(selectedAvatarPreview.value)
+        selectedAvatarPreview.value = ''
+    }
+    avatarFile.value = null
+    removeAvatar.value = false
+    if (avatarInput.value) {
+        avatarInput.value.value = ''
+    }
+}
+
+function resetAll() {
+    resetName()
+    resetSlug()
+    resetBio()
+    resetAvatar()
+}
+
 function onAvatarChange(event) {
     const file = event.target.files?.[0]
     if (selectedAvatarPreview.value) {
@@ -172,10 +219,32 @@ async function saveProfile() {
                     class="space-y-5 rounded-lg border border-gray-100 bg-white p-4 shadow-sm sm:space-y-6 sm:border-0 sm:p-6 sm:shadow"
                     @submit.prevent="saveProfile"
                 >
-                    <div>
-                        <label class="mb-1 block text-sm font-medium text-gray-700" for="site-name"
-                            >Nombre público</label
+                    <div
+                        v-if="hasPendingChanges"
+                        class="flex flex-col gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                        <p class="text-sm text-amber-900">Tienes cambios sin guardar respecto a los valores del servidor.</p>
+                        <button
+                            type="button"
+                            class="inline-flex shrink-0 items-center justify-center rounded-md border border-amber-300 bg-white px-3 py-1.5 text-sm font-medium text-amber-900 hover:bg-amber-100"
+                            @click="resetAll"
                         >
+                            Restaurar todo
+                        </button>
+                    </div>
+
+                    <div>
+                        <div class="mb-1 flex items-start justify-between gap-2">
+                            <label class="block text-sm font-medium text-gray-700" for="site-name">Nombre público</label>
+                            <button
+                                v-if="nameDirty"
+                                type="button"
+                                class="shrink-0 text-xs font-medium text-indigo-600 underline decoration-indigo-300 underline-offset-2 hover:text-indigo-800"
+                                @click="resetName"
+                            >
+                                Restaurar
+                            </button>
+                        </div>
                         <input
                             id="site-name"
                             v-model="form.name"
@@ -186,9 +255,17 @@ async function saveProfile() {
                         />
                     </div>
                     <div>
-                        <label class="mb-1 block text-sm font-medium text-gray-700" for="site-slug"
-                            >Slug (URL)</label
-                        >
+                        <div class="mb-1 flex items-start justify-between gap-2">
+                            <label class="block text-sm font-medium text-gray-700" for="site-slug">Slug (URL)</label>
+                            <button
+                                v-if="slugDirty"
+                                type="button"
+                                class="shrink-0 text-xs font-medium text-indigo-600 underline decoration-indigo-300 underline-offset-2 hover:text-indigo-800"
+                                @click="resetSlug"
+                            >
+                                Restaurar
+                            </button>
+                        </div>
                         <input
                             id="site-slug"
                             v-model="form.slug"
@@ -203,7 +280,17 @@ async function saveProfile() {
                         <p class="mt-1.5 text-xs text-gray-500">Solo minúsculas, números y guiones.</p>
                     </div>
                     <div>
-                        <label class="mb-1 block text-sm font-medium text-gray-700" for="site-bio">Bio</label>
+                        <div class="mb-1 flex items-start justify-between gap-2">
+                            <label class="block text-sm font-medium text-gray-700" for="site-bio">Bio</label>
+                            <button
+                                v-if="bioDirty"
+                                type="button"
+                                class="shrink-0 text-xs font-medium text-indigo-600 underline decoration-indigo-300 underline-offset-2 hover:text-indigo-800"
+                                @click="resetBio"
+                            >
+                                Restaurar
+                            </button>
+                        </div>
                         <textarea
                             id="site-bio"
                             v-model="form.bio"
@@ -213,9 +300,17 @@ async function saveProfile() {
                         />
                     </div>
                     <div>
-                        <label class="mb-1 block text-sm font-medium text-gray-700" for="site-avatar"
-                            >Avatar</label
-                        >
+                        <div class="mb-1 flex items-start justify-between gap-2">
+                            <label class="block text-sm font-medium text-gray-700" for="site-avatar">Avatar</label>
+                            <button
+                                v-if="avatarDirty"
+                                type="button"
+                                class="shrink-0 text-xs font-medium text-indigo-600 underline decoration-indigo-300 underline-offset-2 hover:text-indigo-800"
+                                @click="resetAvatar"
+                            >
+                                Restaurar
+                            </button>
+                        </div>
                         <div class="mb-3 flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
                             <div class="text-center">
                                 <div
