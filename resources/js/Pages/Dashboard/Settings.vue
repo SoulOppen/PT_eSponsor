@@ -79,7 +79,12 @@ function onRemoveAvatar() {
     if (avatarInput.value) {
         avatarInput.value.value = ''
     }
-    removeAvatar.value = true
+    // Solo marcar borrado en servidor si había avatar guardado (evita salto de UI sin “Deshacer”).
+    removeAvatar.value = !!avatarPreviewUrl.value
+}
+
+function undoRemoveAvatar() {
+    removeAvatar.value = false
 }
 
 onBeforeUnmount(() => {
@@ -254,14 +259,33 @@ async function saveProfile() {
                             class="min-h-11 w-full touch-manipulation text-sm text-gray-600 file:mr-3 file:rounded-md file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-indigo-700"
                             @change="onAvatarChange"
                         />
-                        <button
-                            v-if="(avatarPreviewUrl && !removeAvatar) || avatarFile"
-                            type="button"
-                            class="mt-2 inline-flex min-h-10 items-center rounded-md border border-red-200 bg-red-50 px-3 text-sm font-medium text-red-700 hover:bg-red-100"
-                            @click="onRemoveAvatar"
+                        <!-- min-h solo cuando hay acción visible: evita salto al pasar Borrar → Deshacer -->
+                        <div
+                            class="mt-2 flex flex-wrap items-center gap-2"
+                            :class="{
+                                'min-h-10':
+                                    (avatarPreviewUrl && !removeAvatar) ||
+                                    avatarFile ||
+                                    (removeAvatar && avatarPreviewUrl),
+                            }"
                         >
-                            Borrar avatar
-                        </button>
+                            <button
+                                v-if="(avatarPreviewUrl && !removeAvatar) || avatarFile"
+                                type="button"
+                                class="inline-flex min-h-10 items-center rounded-md border border-red-200 bg-red-50 px-3 text-sm font-medium text-red-700 hover:bg-red-100"
+                                @click="onRemoveAvatar"
+                            >
+                                Borrar avatar
+                            </button>
+                            <button
+                                v-else-if="removeAvatar && avatarPreviewUrl"
+                                type="button"
+                                class="inline-flex min-h-10 items-center rounded-md border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                @click="undoRemoveAvatar"
+                            >
+                                Deshacer borrado
+                            </button>
+                        </div>
                     </div>
                     <p v-if="message" class="text-sm text-gray-600">{{ message }}</p>
                     <button
