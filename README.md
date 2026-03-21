@@ -50,7 +50,7 @@ php artisan db:seed --class=DemoSeeder
 - **Live preview** — side-by-side editor and preview on desktop, toggle on mobile
 - **Draft / publish** — edit in draft, publish when ready; public URL always shows the published version
 - **Public page** — fast Blade-rendered view at `/@{slug}`, cached at the Laravel layer, no JS bundle
-- **SEO** — `<title>`, `<meta description>`, Open Graph tags on every public page
+- **SEO** — pública `/@slug`: título `Nombre de la persona - Nombre del sitio`, descripción = bio (o texto por defecto `config/seo.php` / `SEO_DEFAULT_DESCRIPTION`); Inertia: meta description por defecto en `app.blade.php`
 
 ### Block catalogue (MVP)
 

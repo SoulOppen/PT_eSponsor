@@ -11,14 +11,20 @@
                 $avatarUrl = '/storage/' . $rawAvatar;
             }
         }
+        $personName = $site->user?->name ?? $site->name;
+        $publicSiteName = $site->name;
+        $documentTitle = $personName.' - '.$publicSiteName;
+        $bioPlain = trim((string) ($site->bio ?? ''));
+        $metaDescription = $bioPlain !== ''
+            ? \Illuminate\Support\Str::limit(strip_tags($bioPlain), 320, '')
+            : config('seo.default_description');
     @endphp
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $site->name }}</title>
-    <meta property="og:title" content="{{ $site->name }}">
-    @if($site->bio)
-        <meta name="description" content="{{ $site->bio }}">
-    @endif
+    <title>{{ $documentTitle }}</title>
+    <meta property="og:title" content="{{ $documentTitle }}">
+    <meta name="description" content="{{ $metaDescription }}">
+    <meta property="og:description" content="{{ $metaDescription }}">
     @if($avatarUrl)
         <meta property="og:image" content="{{ $avatarUrl }}">
     @endif

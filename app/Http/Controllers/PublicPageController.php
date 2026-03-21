@@ -27,7 +27,7 @@ class PublicPageController extends Controller
      */
     public static function loadPublicPayload(string $slug): array
     {
-        $site = Site::query()->where('slug', $slug)->firstOrFail();
+        $site = Site::query()->where('slug', $slug)->with('user')->firstOrFail();
 
         $blocks = $site->blocks()
             ->where('is_active', true)
