@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\Block;
 use App\Models\Site;
 
 /**
@@ -49,6 +50,41 @@ final class SitePublishState
         }
 
         return ! hash_equals($stored, self::snapshot($site));
+    }
+
+    /**
+     * Restaura el campo `order` de los bloques publicados según el último snapshot
+     * (p. ej. tras «volver a lo publicado»: quita borradores y revierte el orden al de la última publicación).
+     */
+    public static function restorePublishedBlockOrdersFromSnapshot(Site $site, string $snapshotJson): void
+    {
+        try {
+            /** @var list<array<string, mixed>> $rows */
+            $rows = json_decode($snapshotJson, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return;
+        }
+
+        foreach ($rows as $row) {
+            if (! isset($row['id'], $row['order'])) {
+                continue;
+            }
+
+            if (array_key_exists('pub', $row) && $row['pub'] === false) {
+                continue;
+            }
+
+            $block = Block::query()
+                ->where('id', (int) $row['id'])
+                ->where('site_id', $site->id)
+                ->where('is_active', true)
+                ->where('is_published', true)
+                ->first();
+
+            if ($block !== null) {
+                $block->update(['order' => (int) $row['order']]);
+            }
+        }
     }
 
     private static function normalizeProps(mixed $props): mixed

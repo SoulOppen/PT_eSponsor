@@ -138,12 +138,30 @@ export function useBlocks(initialBlocks = []) {
         if (!res.ok) {
             throw new Error(await readApiError(res, 'No se pudieron quitar los borradores.'))
         }
-        blocks.value = blocks.value.filter((b) => b.is_published)
+        let body = {}
         try {
-            return await res.json()
+            body = await res.json()
         } catch {
-            return {}
+            body = {}
         }
+        // El servidor restaura el orden de lo publicado; recargar lista para alinear el editor.
+        const listRes = await apiJson('/api/blocks')
+        if (listRes.ok) {
+            try {
+                const listJson = await listRes.json()
+                if (Array.isArray(listJson.data)) {
+                    blocks.value = listJson.data.map((b) => ({
+                        ...b,
+                        props: { ...(b.props || {}) },
+                    }))
+                }
+            } catch {
+                blocks.value = blocks.value.filter((b) => b.is_published)
+            }
+        } else {
+            blocks.value = blocks.value.filter((b) => b.is_published)
+        }
+        return body
     }
 
     return {

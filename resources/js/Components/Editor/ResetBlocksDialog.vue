@@ -57,8 +57,10 @@ const isPrune = computed(() => props.variant === 'pruneUnpublished')
                     <p v-if="isPrune" class="mt-1 text-sm text-gray-600">
                         Se eliminarán
                         <strong>{{ count }}</strong>
-                        bloque(s) que aún no están en tu página pública (borradores). Los bloques ya publicados no se
-                        tocan.
+                        bloque(s) que aún no están en tu página pública (borradores). Los bloques ya publicados se
+                        mantienen y
+                        <strong>vuelven al orden</strong>
+                        de la última publicación.
                     </p>
                     <p v-else class="mt-1 text-sm text-gray-600">
                         Vas a eliminar

@@ -92,8 +92,20 @@ describe('useBlocks', () => {
         expect(fetch).toHaveBeenCalledWith('/api/blocks/all', expect.objectContaining({ method: 'DELETE' }))
     })
 
-    it('pruneUnpublishedBlocks keeps only published blocks locally', async () => {
-        fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ ok: true }) })
+    it('pruneUnpublishedBlocks refetches blocks after prune', async () => {
+        fetch
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({ ok: true, published_blocks_snapshot: '[]' }),
+            })
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    data: [
+                        { id: 2, type: 'text', props: { content: 'x' }, order: 0, is_published: true, is_active: true },
+                    ],
+                }),
+            })
         const { blocks, pruneUnpublishedBlocks } = useBlocks([
             { id: 1, type: 'text', props: {}, order: 0, is_published: false },
             { id: 2, type: 'text', props: {}, order: 1, is_published: true },
@@ -101,5 +113,7 @@ describe('useBlocks', () => {
         await pruneUnpublishedBlocks()
         expect(blocks.value).toHaveLength(1)
         expect(blocks.value[0].id).toBe(2)
+        expect(blocks.value[0].order).toBe(0)
+        expect(fetch).toHaveBeenCalledWith('/api/blocks', expect.any(Object))
     })
 })

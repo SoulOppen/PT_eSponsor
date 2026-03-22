@@ -98,7 +98,15 @@ class BlockController extends Controller
     public function destroyUnpublished(Request $request): JsonResponse
     {
         $site = $this->userSite($request);
+        $site->refresh();
+
+        $baselineSnapshot = $site->published_blocks_snapshot;
+
         $site->blocks()->where('is_published', false)->delete();
+
+        if (is_string($baselineSnapshot) && $baselineSnapshot !== '') {
+            SitePublishState::restorePublishedBlockOrdersFromSnapshot($site, $baselineSnapshot);
+        }
 
         $site->refresh();
 

@@ -2,6 +2,7 @@
 
 use App\Models\Block;
 use App\Models\User;
+use App\Support\SitePublishState;
 
 it('authenticated user can create a block', function () {
     $user = User::factory()->hasSite()->create();
@@ -96,6 +97,41 @@ it('user can delete only unpublished blocks', function () {
 
     expect(Block::find($draft->id))->toBeNull();
     expect(Block::find($live->id))->not->toBeNull();
+});
+
+it('prune unpublished restores order of published blocks from snapshot', function () {
+    $user = User::factory()->hasSite()->create();
+    $b1 = Block::factory()->create([
+        'site_id' => $user->site->id,
+        'order' => 0,
+        'is_active' => true,
+        'is_published' => true,
+    ]);
+    $b2 = Block::factory()->create([
+        'site_id' => $user->site->id,
+        'order' => 1,
+        'is_active' => true,
+        'is_published' => true,
+    ]);
+    $site = $user->site->fresh();
+    $site->update([
+        'published_at' => now(),
+        'published_blocks_snapshot' => SitePublishState::snapshot($site->fresh()),
+    ]);
+
+    $b1->update(['order' => 1]);
+    $b2->update(['order' => 0]);
+    Block::factory()->create([
+        'site_id' => $site->id,
+        'order' => 2,
+        'is_active' => true,
+        'is_published' => false,
+    ]);
+
+    $this->actingAs($user)->deleteJson('/api/blocks/unpublished')->assertOk();
+
+    expect($b1->fresh()->order)->toBe(0);
+    expect($b2->fresh()->order)->toBe(1);
 });
 
 it('user can duplicate a block', function () {
