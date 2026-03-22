@@ -21,10 +21,19 @@ class DraftPageController extends Controller
             ->orderBy('id')
             ->get();
 
+        $userId = auth()->id();
+
+        $canPublishDraft = $site->blocks()
+            ->where('is_active', true)
+            ->where('is_published', false)
+            ->exists();
+
         return view('public.site', [
             'site' => $site,
             'blocks' => $blocks,
             'isDraftPreview' => true,
+            'canEditDraft' => $userId !== null && (int) $userId === (int) $site->user_id,
+            'canPublishDraft' => $canPublishDraft,
         ]);
     }
 }

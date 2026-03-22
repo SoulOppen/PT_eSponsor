@@ -1,4 +1,4 @@
-﻿<script setup>
+<script setup>
 import Checkbox from '@/Components/Checkbox.vue';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import InputError from '@/Components/InputError.vue';
@@ -6,6 +6,7 @@ import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { onMounted } from 'vue';
 
 defineProps({
     canResetPassword: {
@@ -20,7 +21,17 @@ const form = useForm({
     email: '',
     password: '',
     remember: false,
+    /** Opcional: misma app, p. ej. ?redirect=/draft/@slug si la sesión no guardó la URL. */
+    redirect: '',
 });
+
+onMounted(() => {
+    if (typeof window === 'undefined') return
+    const q = new URLSearchParams(window.location.search).get('redirect')
+    if (q) {
+        form.redirect = q
+    }
+})
 
 const submit = () => {
     form.post(route('login'), {

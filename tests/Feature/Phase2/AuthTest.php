@@ -40,15 +40,42 @@ it('auto-generated slug is url-safe', function () {
 it('user can login with correct credentials', function () {
     $user = User::factory()->create(['password' => bcrypt('secret')]);
     $this->post('/login', ['email' => $user->email, 'password' => 'secret'])
-         ->assertRedirect('/dashboard');
+        ->assertRedirect('/dashboard');
 });
 
 it('login fails with wrong password', function () {
     $user = User::factory()->create(['password' => bcrypt('secret')]);
     $this->post('/login', ['email' => $user->email, 'password' => 'wrong'])
-         ->assertSessionHasErrors('email');
+        ->assertSessionHasErrors('email');
 });
 
 it('guest cannot access dashboard', function () {
     $this->get('/dashboard')->assertRedirect('/login');
+});
+
+it('redirects to intended url after login when redirected from auth middleware', function () {
+    $user = User::factory()->hasSite(['slug' => 'alice'])->create([
+        'password' => bcrypt('secret'),
+        'email_verified_at' => now(),
+    ]);
+
+    $this->get('/draft/@alice')->assertRedirect(route('login'));
+
+    $this->post('/login', [
+        'email' => $user->email,
+        'password' => 'secret',
+    ])->assertRedirect(url('/draft/@alice'));
+});
+
+it('login ignores unsafe redirect query param', function () {
+    $user = User::factory()->create([
+        'password' => bcrypt('secret'),
+        'email_verified_at' => now(),
+    ]);
+
+    $this->post('/login', [
+        'email' => $user->email,
+        'password' => 'secret',
+        'redirect' => 'https://evil.example/phishing',
+    ])->assertRedirect('/dashboard');
 });

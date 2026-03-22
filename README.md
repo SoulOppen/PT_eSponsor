@@ -399,7 +399,7 @@ Each partial receives the full **`$block`** model (p. ej. `$block->props`, `$blo
 - `/dashboard`: main editor to manage blocks.
 - `/dashboard/settings`: site configuration (name, slug, bio, avatar).
 - `/@{slug}`: creator's published public page.
-- `/draft/@{slug}`: full-page draft preview (active blocks, including unpublished) — **auth + verified** required; any logged-in user can open it for now (owner-only restriction not enforced yet).
+- `/draft/@{slug}`: full-page draft preview (active blocks, including unpublished) — **auth + verified** required; cualquier usuario autenticado puede abrirla, pero **solo el dueño** ve la barra para **publicar** y **reordenar bloques** por arrastre (mismas APIs que el editor).
 
 ---
 

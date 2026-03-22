@@ -9,7 +9,7 @@ export default defineConfig({
     },
     plugins: [
         laravel({
-            input: 'resources/js/app.js',
+            input: ['resources/js/app.js', 'resources/js/draft-preview.js'],
             refresh: true,
         }),
         vue({

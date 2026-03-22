@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Block;
 use App\Models\Site;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
 
 class PublicPageController extends Controller
 {
@@ -14,6 +16,8 @@ class PublicPageController extends Controller
         return view('public.site', [
             'site' => $payload['site'],
             'blocks' => $payload['blocks'],
+            'canEditDraft' => false,
+            'canPublishDraft' => false,
         ]);
     }
 
@@ -23,7 +27,7 @@ class PublicPageController extends Controller
     }
 
     /**
-     * @return array{site: Site, blocks: \Illuminate\Support\Collection<int, \App\Models\Block>}
+     * @return array{site: Site, blocks: Collection<int, Block>}
      */
     public static function loadPublicPayload(string $slug): array
     {

@@ -31,9 +31,45 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
+        $default = route('dashboard', absolute: false);
+
+        // Guardar destino antes de regenerar la sesión (si no, puede perderse url.intended).
+        $intended = $request->session()->pull('url.intended', $default);
+
+        // Respaldo: ?redirect=/ruta (misma app) si no hubo sesión previa.
+        $fromQuery = $request->string('redirect')->toString();
+        if ($intended === $default && $fromQuery !== '') {
+            $candidate = urldecode($fromQuery);
+            if ($this->isSafeRedirectTarget($candidate)) {
+                $intended = $candidate;
+            }
+        }
+
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        if (! $this->isSafeRedirectTarget($intended)) {
+            $intended = $default;
+        }
+
+        return redirect()->to($intended);
+    }
+
+    /**
+     * Evita redirecciones abiertas: solo rutas relativas de esta app o URLs bajo APP_URL.
+     */
+    private function isSafeRedirectTarget(string $url): bool
+    {
+        if ($url === '') {
+            return false;
+        }
+
+        if (str_starts_with($url, '/') && ! str_starts_with($url, '//')) {
+            return true;
+        }
+
+        $base = rtrim((string) config('app.url'), '/');
+
+        return str_starts_with($url, $base.'/') || $url === $base;
     }
 
     /**
@@ -50,4 +86,3 @@ class AuthenticatedSessionController extends Controller
         return redirect()->route('home');
     }
 }
-
