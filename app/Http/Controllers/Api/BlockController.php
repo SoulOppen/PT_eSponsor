@@ -72,6 +72,29 @@ class BlockController extends Controller
         return response()->noContent();
     }
 
+    /**
+     * Elimina todos los bloques del sitio del usuario (acción irreversible).
+     */
+    public function destroyAll(Request $request): JsonResponse
+    {
+        $site = $this->userSite($request);
+        $site->blocks()->delete();
+
+        return response()->json(['ok' => true]);
+    }
+
+    /**
+     * Elimina solo bloques aún no publicados (borradores). Los que ya están en la
+     * página pública (is_published = true) se mantienen.
+     */
+    public function destroyUnpublished(Request $request): JsonResponse
+    {
+        $site = $this->userSite($request);
+        $site->blocks()->where('is_published', false)->delete();
+
+        return response()->json(['ok' => true]);
+    }
+
     public function reorder(Request $request): JsonResponse
     {
         $site = $this->userSite($request);

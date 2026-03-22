@@ -12,7 +12,8 @@
             }
         }
         $personName = $site->user?->name ?? $site->name;
-        $documentTitle = $personName.' - '.config('app.name');
+        $isDraftPreview = ! empty($isDraftPreview ?? false);
+        $documentTitle = $personName.' - '.config('app.name').($isDraftPreview ? ' — Borrador' : '');
         $bioPlain = trim((string) ($site->bio ?? ''));
         $metaDescription = $bioPlain !== ''
             ? \Illuminate\Support\Str::limit(strip_tags($bioPlain), 320, '')
@@ -20,6 +21,9 @@
     @endphp
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    @if($isDraftPreview)
+        <meta name="robots" content="noindex, nofollow">
+    @endif
     <title>{{ $documentTitle }}</title>
     <meta property="og:title" content="{{ $documentTitle }}">
     <meta name="description" content="{{ $metaDescription }}">
@@ -35,6 +39,16 @@
     </style>
 </head>
 <body>
+@if($isDraftPreview)
+    <div
+        role="status"
+        style="background: #fef3c7; color: #92400e; padding: 0.65rem 1.25rem; font-size: 0.9rem; border-bottom: 1px solid #fcd34d;"
+    >
+        <strong>Vista previa (borrador)</strong>
+        — Solo usuarios conectados. Incluye bloques activos aún no publicados.
+        <a href="{{ url('/@'.$site->slug) }}" style="color: #b45309; margin-left: 0.5rem;">Ver página pública ↗</a>
+    </div>
+@endif
 <main>
     <header style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem;">
         @if($avatarUrl)
@@ -64,7 +78,13 @@
             {{-- Tipo sin plantilla Blade (p. ej. migración futura) --}}
         @endif
     @empty
-        <p style="color: #666;">Aún no hay bloques publicados en esta página.</p>
+        <p style="color: #666;">
+            @if($isDraftPreview)
+                Aún no hay bloques activos en esta vista previa.
+            @else
+                Aún no hay bloques publicados en esta página.
+            @endif
+        </p>
     @endforelse
 </main>
 </body>

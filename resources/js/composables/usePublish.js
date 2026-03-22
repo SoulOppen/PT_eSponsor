@@ -21,12 +21,15 @@ export function usePublish() {
         const token = readXsrfToken()
         if (token) headers['X-XSRF-TOKEN'] = token
 
-        await fetch('/api/site/publish', {
+        const res = await fetch('/api/site/publish', {
             method: 'POST',
             credentials: 'same-origin',
             headers,
             body: '{}',
         })
+        if (!res.ok) {
+            throw new Error('No se pudo publicar.')
+        }
         isDirty.value = false
     }
 

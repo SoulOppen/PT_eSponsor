@@ -24,4 +24,12 @@ describe('usePublish', () => {
         expect(isDirty.value).toBe(false)
         expect(fetch).toHaveBeenCalledWith('/api/site/publish', expect.any(Object))
     })
+
+    it('publish does not reset isDirty when response is not ok', async () => {
+        fetch.mockResolvedValueOnce({ ok: false, status: 500 })
+        const { isDirty, markDirty, publish } = usePublish()
+        markDirty()
+        await expect(publish()).rejects.toThrow('No se pudo publicar.')
+        expect(isDirty.value).toBe(true)
+    })
 })

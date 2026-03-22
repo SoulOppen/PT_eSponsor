@@ -75,6 +75,29 @@ it('user can delete their own block', function () {
     expect(Block::find($block->id))->toBeNull();
 });
 
+it('user can delete all blocks on their site', function () {
+    $user = User::factory()->hasSite()->create();
+    Block::factory()->count(3)->create(['site_id' => $user->site->id]);
+    $this->actingAs($user)
+        ->deleteJson('/api/blocks/all')
+        ->assertOk();
+    expect($user->site->fresh()->blocks)->toHaveCount(0);
+});
+
+it('user can delete only unpublished blocks', function () {
+    $user = User::factory()->hasSite()->create();
+    $siteId = $user->site->id;
+    $draft = Block::factory()->create(['site_id' => $siteId, 'is_published' => false]);
+    $live = Block::factory()->create(['site_id' => $siteId, 'is_published' => true]);
+
+    $this->actingAs($user)
+        ->deleteJson('/api/blocks/unpublished')
+        ->assertOk();
+
+    expect(Block::find($draft->id))->toBeNull();
+    expect(Block::find($live->id))->not->toBeNull();
+});
+
 it('user can duplicate a block', function () {
     $user = User::factory()->hasSite()->create();
     $block = Block::factory()->create([

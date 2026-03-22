@@ -281,7 +281,8 @@ Types: feat | fix | refactor | test | docs | chore | style | perf
 │   ├── Http/
 │   │   ├── Controllers/
 │   │   │   ├── DashboardController.php       # /dashboard, /dashboard/settings (Inertia)
-│   │   │   ├── PublicPageController.php      # /@slug → Blade
+│   │   │   ├── PublicPageController.php      # /@slug → Blade (publicado)
+│   │   │   ├── DraftPageController.php       # /draft/@slug → vista previa borrador (auth)
 │   │   │   ├── ProfileController.php         # Perfil Breeze (Inertia, rutas web)
 │   │   │   ├── Api/
 │   │   │   │   ├── BlockController.php       # CRUD, reorder, duplicate, toggle
@@ -398,6 +399,7 @@ Each partial receives the full **`$block`** model (p. ej. `$block->props`, `$blo
 - `/dashboard`: main editor to manage blocks.
 - `/dashboard/settings`: site configuration (name, slug, bio, avatar).
 - `/@{slug}`: creator's published public page.
+- `/draft/@{slug}`: full-page draft preview (active blocks, including unpublished) — **auth + verified** required; any logged-in user can open it for now (owner-only restriction not enforced yet).
 
 ---
 

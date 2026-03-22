@@ -120,6 +120,22 @@ export function useBlocks(initialBlocks = []) {
         }))
     }
 
+    async function destroyAllBlocks() {
+        const res = await apiJson('/api/blocks/all', { method: 'DELETE' })
+        if (!res.ok) {
+            throw new Error(await readApiError(res, 'No se pudieron eliminar los bloques.'))
+        }
+        blocks.value = []
+    }
+
+    async function pruneUnpublishedBlocks() {
+        const res = await apiJson('/api/blocks/unpublished', { method: 'DELETE' })
+        if (!res.ok) {
+            throw new Error(await readApiError(res, 'No se pudieron quitar los borradores.'))
+        }
+        blocks.value = blocks.value.filter((b) => b.is_published)
+    }
+
     return {
         blocks,
         sortedBlocks,
@@ -129,5 +145,7 @@ export function useBlocks(initialBlocks = []) {
         duplicateBlock,
         updateBlock,
         reorderBlocks,
+        destroyAllBlocks,
+        pruneUnpublishedBlocks,
     }
 }

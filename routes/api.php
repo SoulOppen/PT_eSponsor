@@ -14,6 +14,8 @@ Route::middleware(['web', 'auth', 'verified', AcceptJson::class])->group(functio
 
     Route::get('/blocks', [BlockController::class, 'index']);
     Route::post('/blocks', [BlockController::class, 'store']);
+    Route::delete('/blocks/all', [BlockController::class, 'destroyAll']);
+    Route::delete('/blocks/unpublished', [BlockController::class, 'destroyUnpublished']);
     Route::post('/blocks/reorder', [BlockController::class, 'reorder']);
     Route::post('/blocks/{block}/duplicate', [BlockController::class, 'duplicate']);
     Route::patch('/blocks/{block}/toggle', [BlockController::class, 'toggle']);

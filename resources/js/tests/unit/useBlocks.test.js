@@ -81,4 +81,25 @@ describe('useBlocks', () => {
         expect(blocks.value.find((b) => b.id === 2).order).toBe(0)
         expect(blocks.value.find((b) => b.id === 1).order).toBe(1)
     })
+
+    it('destroyAllBlocks clears local state on success', async () => {
+        fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ ok: true }) })
+        const { blocks, destroyAllBlocks } = useBlocks([
+            { id: 1, type: 'text', props: {}, order: 0 },
+        ])
+        await destroyAllBlocks()
+        expect(blocks.value).toHaveLength(0)
+        expect(fetch).toHaveBeenCalledWith('/api/blocks/all', expect.objectContaining({ method: 'DELETE' }))
+    })
+
+    it('pruneUnpublishedBlocks keeps only published blocks locally', async () => {
+        fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ ok: true }) })
+        const { blocks, pruneUnpublishedBlocks } = useBlocks([
+            { id: 1, type: 'text', props: {}, order: 0, is_published: false },
+            { id: 2, type: 'text', props: {}, order: 1, is_published: true },
+        ])
+        await pruneUnpublishedBlocks()
+        expect(blocks.value).toHaveLength(1)
+        expect(blocks.value[0].id).toBe(2)
+    })
 })

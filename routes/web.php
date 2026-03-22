@@ -1,6 +1,7 @@
-﻿<?php
+<?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DraftPageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicPageController;
 use Illuminate\Support\Facades\Route;
@@ -15,6 +16,10 @@ Route::get('/@{slug}', [PublicPageController::class, 'show'])->where('slug', '[a
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/settings', [DashboardController::class, 'settings'])->name('dashboard.settings');
+    /** Vista previa borrador (bloques activos, publicados o no). Cualquier usuario autenticado puede verla (sin restricción al dueño por ahora). */
+    Route::get('/draft/@{slug}', [DraftPageController::class, 'show'])
+        ->where('slug', '[a-z0-9\-]+')
+        ->name('draft.preview');
 });
 
 Route::middleware('auth')->group(function () {

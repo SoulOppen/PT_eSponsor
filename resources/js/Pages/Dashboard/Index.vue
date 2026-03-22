@@ -58,16 +58,31 @@ const initialBlocks = props.blocks.map((b) => ({
     props: { ...(b.props || {}) },
 }))
 
-const { sortedBlocks, addBlock, removeBlock, toggleBlock, duplicateBlock, updateBlock, reorderBlocks } =
-    useBlocks(initialBlocks)
+const {
+    blocks,
+    sortedBlocks,
+    addBlock,
+    removeBlock,
+    toggleBlock,
+    duplicateBlock,
+    updateBlock,
+    reorderBlocks,
+    destroyAllBlocks,
+    pruneUnpublishedBlocks,
+} = useBlocks(initialBlocks)
 const { isDirty, markDirty, publish } = usePublish()
 const addBlockError = ref('')
+const publishError = ref('')
+const publishing = ref(false)
 const resetError = ref('')
 const resettingBlocks = ref(false)
-const showResetDialog = ref(false)
+/** Diálogo masivo: eliminar todo vs quitar solo borradores (no publicados) */
+const bulkDialog = ref({ show: false, variant: 'deleteAll' })
 const mobilePanel = ref('blocks')
 
 const publicUrl = computed(() => `/@${props.site.slug}`)
+/** Vista previa a pantalla completa (requiere sesión; mismo origen que el dashboard). */
+const draftUrl = computed(() => `/draft/@${props.site.slug}`)
 const blockCount = computed(() => sortedBlocks.value.length)
 const hasBlocks = computed(() => blockCount.value > 0)
 const blockTypeCounts = computed(() => {
@@ -79,6 +94,18 @@ const blockTypeCounts = computed(() => {
     }
     return counts
 })
+
+/** Bloques activos que aún no están en la versión pública (p. ej. al abrir el editor sin tocar nada). */
+const hasUnpublishedActive = computed(() =>
+    sortedBlocks.value.some((b) => b.is_active && !b.is_published),
+)
+
+/** Puede publicar: hubo edición en esta sesión o quedan activos sin publicar. */
+const canPublish = computed(() => isDirty.value || hasUnpublishedActive.value)
+
+/** Bloques con is_published = false (borradores; el backend los elimina al «volver a lo publicado»). */
+const unpublishedCount = computed(() => sortedBlocks.value.filter((b) => !b.is_published).length)
+const hasUnpublishedDrafts = computed(() => unpublishedCount.value > 0)
 
 async function handleAddType(type) {
     addBlockError.value = ''
@@ -116,7 +143,17 @@ async function handleUpdateProps(id, newProps) {
 }
 
 async function handlePublish() {
-    await publish()
+    if (!canPublish.value || publishing.value) return
+    publishError.value = ''
+    publishing.value = true
+    try {
+        await publish()
+        blocks.value = blocks.value.map((b) => (b.is_active ? { ...b, is_published: true } : b))
+    } catch (error) {
+        publishError.value = error?.message || 'No se pudo publicar.'
+    } finally {
+        publishing.value = false
+    }
 }
 
 async function handleReorder(orderedIds) {
@@ -124,28 +161,38 @@ async function handleReorder(orderedIds) {
     markDirty()
 }
 
-async function handleResetBlocks() {
-    if (!sortedBlocks.value.length || resettingBlocks.value) return
-    showResetDialog.value = false
+function closeBulkDialog() {
+    bulkDialog.value = { ...bulkDialog.value, show: false }
+}
+
+/**
+ * @param {'deleteAll' | 'pruneUnpublished'} variant
+ */
+function openBulkDialog(variant) {
+    if (resettingBlocks.value) return
+    if (variant === 'deleteAll' && !hasBlocks.value) return
+    if (variant === 'pruneUnpublished' && !hasUnpublishedDrafts.value) return
+    bulkDialog.value = { show: true, variant }
+}
+
+async function handleBulkConfirm() {
+    const variant = bulkDialog.value.variant
+    bulkDialog.value = { ...bulkDialog.value, show: false }
     resetError.value = ''
     resettingBlocks.value = true
 
     try {
-        const ids = sortedBlocks.value.map((b) => b.id)
-        for (const id of ids) {
-            await removeBlock(id)
+        if (variant === 'deleteAll') {
+            await destroyAllBlocks()
+        } else {
+            await pruneUnpublishedBlocks()
         }
         markDirty()
     } catch (error) {
-        resetError.value = error?.message || 'No se pudieron eliminar todos los bloques.'
+        resetError.value = error?.message || 'No se pudo completar la acción.'
     } finally {
         resettingBlocks.value = false
     }
-}
-
-function openResetDialog() {
-    if (!hasBlocks.value || resettingBlocks.value) return
-    showResetDialog.value = true
 }
 </script>
 
@@ -161,10 +208,16 @@ function openResetDialog() {
                 </h2>
                 <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-3">
                     <p
-                        v-if="isDirty"
+                        v-if="canPublish"
                         class="order-first rounded-md bg-amber-50 px-3 py-2 text-center text-sm text-amber-800 sm:order-none sm:bg-transparent sm:px-0 sm:py-0"
                     >
                         Cambios sin publicar
+                    </p>
+                    <p
+                        v-if="publishError"
+                        class="order-first rounded-md border border-red-200 bg-red-50 px-3 py-2 text-center text-sm text-red-700 sm:order-none sm:text-left"
+                    >
+                        {{ publishError }}
                     </p>
                     <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-2">
                         <a
@@ -175,6 +228,15 @@ function openResetDialog() {
                         >
                             Ver público ↗
                         </a>
+                        <a
+                            :href="draftUrl"
+                            target="_blank"
+                            rel="noopener"
+                            class="flex min-h-11 touch-manipulation items-center justify-center rounded-lg border border-gray-200 bg-white px-4 text-center text-sm font-medium text-gray-700 shadow-sm active:bg-gray-50 sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-2 sm:py-2 sm:shadow-none sm:underline"
+                            title="Página completa con borradores (solo usuarios conectados)"
+                        >
+                            Vista previa borrador ↗
+                        </a>
                         <Link
                             href="/dashboard/settings"
                             class="flex min-h-11 touch-manipulation items-center justify-center rounded-lg border border-gray-200 bg-white px-4 text-center text-sm font-medium text-gray-700 shadow-sm active:bg-gray-50 sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-2 sm:py-2 sm:shadow-none sm:underline"
@@ -184,11 +246,12 @@ function openResetDialog() {
                     </div>
                     <button
                         type="button"
-                        class="min-h-11 w-full touch-manipulation rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow active:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto sm:py-2"
+                        class="min-h-11 w-full touch-manipulation rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 enabled:active:bg-indigo-700 sm:w-auto sm:py-2 disabled:cursor-not-allowed disabled:opacity-50"
                         data-action="publish"
+                        :disabled="!canPublish || publishing"
                         @click="handlePublish"
                     >
-                        Publicar
+                        {{ publishing ? 'Publicando…' : 'Publicar' }}
                     </button>
                 </div>
             </div>
@@ -248,22 +311,41 @@ function openResetDialog() {
                                     {{ blockCount }}
                                 </span>
                             </div>
-                            <button
-                                type="button"
-                                class="inline-flex min-h-10 items-center gap-2 rounded-md border border-red-200 bg-white px-3 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-                                :disabled="!hasBlocks || resettingBlocks"
-                                data-action="reset-blocks"
-                                @click="openResetDialog"
-                            >
-                                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path
-                                        fill-rule="evenodd"
-                                        d="M8.5 2a1 1 0 0 0-1 1V4H5a1 1 0 1 0 0 2h.278l.58 9.29A2 2 0 0 0 7.854 17h4.292a2 2 0 0 0 1.996-1.71l.58-9.29H15a1 1 0 1 0 0-2h-2.5V3a1 1 0 0 0-1-1h-3Z"
-                                        clip-rule="evenodd"
-                                    />
-                                </svg>
-                                {{ resettingBlocks ? 'Reseteando...' : 'Reset' }}
-                            </button>
+                            <div class="flex flex-wrap items-center justify-end gap-2">
+                                <button
+                                    type="button"
+                                    class="inline-flex min-h-10 items-center gap-1.5 rounded-md border border-amber-200 bg-white px-3 text-sm font-medium text-amber-900 hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                    :disabled="!hasUnpublishedDrafts || resettingBlocks"
+                                    data-action="prune-unpublished-blocks"
+                                    title="Quita solo los bloques que aún no están en tu página pública"
+                                    @click="openBulkDialog('pruneUnpublished')"
+                                >
+                                    <svg class="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M4 2a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v16a1 1 0 0 1-1.447.894L10 15.618l-4.553 2.276A1 1 0 0 1 4 17V2Zm2 1v12.382l3.553-1.776a1 1 0 0 1 .894 0L14 15.382V3H6Z"
+                                            clip-rule="evenodd"
+                                        />
+                                    </svg>
+                                    Volver a lo publicado
+                                </button>
+                                <button
+                                    type="button"
+                                    class="inline-flex min-h-10 items-center gap-2 rounded-md border border-red-200 bg-white px-3 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                    :disabled="!hasBlocks || resettingBlocks"
+                                    data-action="delete-all-blocks"
+                                    @click="openBulkDialog('deleteAll')"
+                                >
+                                    <svg class="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M8.5 2a1 1 0 0 0-1 1V4H5a1 1 0 1 0 0 2h.278l.58 9.29A2 2 0 0 0 7.854 17h4.292a2 2 0 0 0 1.996-1.71l.58-9.29H15a1 1 0 1 0 0-2h-2.5V3a1 1 0 0 0-1-1h-3Z"
+                                            clip-rule="evenodd"
+                                        />
+                                    </svg>
+                                    Eliminar todos mis bloques
+                                </button>
+                            </div>
                         </div>
                         <p
                             v-if="resetError"
@@ -292,11 +374,12 @@ function openResetDialog() {
         </div>
 
         <ResetBlocksDialog
-            :show="showResetDialog"
-            :count="blockCount"
+            :show="bulkDialog.show"
+            :variant="bulkDialog.variant"
+            :count="bulkDialog.variant === 'deleteAll' ? blockCount : unpublishedCount"
             :loading="resettingBlocks"
-            @close="showResetDialog = false"
-            @confirm="handleResetBlocks"
+            @close="closeBulkDialog"
+            @confirm="handleBulkConfirm"
         />
     </AuthenticatedLayout>
 </template>
