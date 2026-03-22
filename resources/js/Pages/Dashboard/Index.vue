@@ -100,8 +100,22 @@ const hasUnpublishedActive = computed(() =>
     sortedBlocks.value.some((b) => b.is_active && !b.is_published),
 )
 
-/** Puede publicar: hubo edición en esta sesión o quedan activos sin publicar. */
-const canPublish = computed(() => isDirty.value || hasUnpublishedActive.value)
+/** Orden o contenido cambiaron respecto a la última publicación (updated_at > site.published_at). */
+const hasChangesSincePublished = computed(() => {
+    const publishedAt = props.site?.published_at
+    if (!publishedAt) return false
+    const t = new Date(publishedAt).getTime()
+    return sortedBlocks.value.some((b) => {
+        if (!b?.is_active) return false
+        const u = b.updated_at ? new Date(b.updated_at).getTime() : 0
+        return u > t
+    })
+})
+
+/** Puede publicar: edición local, activos sin publicar o cambios desde la última publicación (p. ej. reordenar). */
+const canPublish = computed(
+    () => isDirty.value || hasUnpublishedActive.value || hasChangesSincePublished.value,
+)
 
 /** Bloques con is_published = false (borradores; el backend los elimina al «volver a lo publicado»). */
 const unpublishedCount = computed(() => sortedBlocks.value.filter((b) => !b.is_published).length)

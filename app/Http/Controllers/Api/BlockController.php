@@ -8,9 +8,9 @@ use App\Models\Site;
 use App\Services\BlockSchemaRegistry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\Response;
 
 class BlockController extends Controller
 {
@@ -113,7 +113,10 @@ class BlockController extends Controller
         }
 
         foreach ($validated['blocks'] as $row) {
-            Block::query()->where('id', $row['id'])->update(['order' => $row['order']]);
+            $block = Block::query()->find($row['id']);
+            if ($block !== null) {
+                $block->update(['order' => $row['order']]);
+            }
         }
 
         return response()->json(['ok' => true]);

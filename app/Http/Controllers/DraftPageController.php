@@ -23,10 +23,18 @@ class DraftPageController extends Controller
 
         $userId = auth()->id();
 
-        $canPublishDraft = $site->blocks()
+        $hasUnpublishedActive = $site->blocks()
             ->where('is_active', true)
             ->where('is_published', false)
             ->exists();
+
+        $publishedAt = $site->published_at;
+        $hasChangesSincePublish = $publishedAt !== null && $site->blocks()
+            ->where('is_active', true)
+            ->where('updated_at', '>', $publishedAt)
+            ->exists();
+
+        $canPublishDraft = $hasUnpublishedActive || $hasChangesSincePublish;
 
         return view('public.site', [
             'site' => $site,
