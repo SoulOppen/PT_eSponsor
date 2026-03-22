@@ -23,7 +23,6 @@ it('blocks table has required columns', function () {
 
 it('sites table has required columns', function () {
     expect(Schema::hasColumns('sites', [
-        'id', 'user_id', 'name', 'slug', 'bio', 'avatar_url', 'published_at',
+        'id', 'user_id', 'name', 'slug', 'bio', 'avatar_url', 'published_at', 'published_blocks_snapshot',
     ]))->toBeTrue();
 });
-

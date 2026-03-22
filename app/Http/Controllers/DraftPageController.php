@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Site;
+use App\Support\SitePublishState;
 use Illuminate\Contracts\View\View;
 
 /**
@@ -23,18 +24,7 @@ class DraftPageController extends Controller
 
         $userId = auth()->id();
 
-        $hasUnpublishedActive = $site->blocks()
-            ->where('is_active', true)
-            ->where('is_published', false)
-            ->exists();
-
-        $publishedAt = $site->published_at;
-        $hasChangesSincePublish = $publishedAt !== null && $site->blocks()
-            ->where('is_active', true)
-            ->where('updated_at', '>', $publishedAt)
-            ->exists();
-
-        $canPublishDraft = $hasUnpublishedActive || $hasChangesSincePublish;
+        $canPublishDraft = SitePublishState::hasPendingChanges($site);
 
         return view('public.site', [
             'site' => $site,

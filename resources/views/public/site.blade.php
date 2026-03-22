@@ -118,7 +118,7 @@
                 <button
                     type="button"
                     id="draft-edit-publish"
-                    @if(! $canPublishDraft) disabled title="No hay nada que publicar: bloques ya publicados y sin cambios (contenido u orden) desde la última publicación." @endif
+                    @if(! $canPublishDraft) disabled title="Nada pendiente: coincide con la última publicación (orden y contenido de bloques activos)." @endif
                 >Publicar</button>
                 <a class="editor-link" href="{{ route('dashboard') }}" title="Editor de tu página">Ir a tu editor</a>
                 <span id="draft-edit-message" style="flex: 1; min-width: 8rem;" aria-live="polite"></span>

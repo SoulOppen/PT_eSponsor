@@ -13,6 +13,10 @@ export function usePublish() {
         isDirty.value = true
     }
 
+    function resetDirty() {
+        isDirty.value = false
+    }
+
     async function publish() {
         const headers = {
             Accept: 'application/json',
@@ -31,7 +35,12 @@ export function usePublish() {
             throw new Error('No se pudo publicar.')
         }
         isDirty.value = false
+        try {
+            return await res.json()
+        } catch {
+            return {}
+        }
     }
 
-    return { isDirty, markDirty, publish }
+    return { isDirty, markDirty, resetDirty, publish }
 }

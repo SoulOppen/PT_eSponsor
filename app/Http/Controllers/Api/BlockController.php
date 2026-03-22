@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Block;
 use App\Models\Site;
 use App\Services\BlockSchemaRegistry;
+use App\Support\SitePublishState;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -80,7 +81,14 @@ class BlockController extends Controller
         $site = $this->userSite($request);
         $site->blocks()->delete();
 
-        return response()->json(['ok' => true]);
+        $empty = SitePublishState::snapshot($site->fresh());
+
+        $site->update(['published_blocks_snapshot' => $empty]);
+
+        return response()->json([
+            'ok' => true,
+            'published_blocks_snapshot' => $empty,
+        ]);
     }
 
     /**
@@ -92,7 +100,16 @@ class BlockController extends Controller
         $site = $this->userSite($request);
         $site->blocks()->where('is_published', false)->delete();
 
-        return response()->json(['ok' => true]);
+        $site->refresh();
+
+        $snapshot = SitePublishState::snapshot($site);
+
+        $site->update(['published_blocks_snapshot' => $snapshot]);
+
+        return response()->json([
+            'ok' => true,
+            'published_blocks_snapshot' => $snapshot,
+        ]);
     }
 
     public function reorder(Request $request): JsonResponse

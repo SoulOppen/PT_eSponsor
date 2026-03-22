@@ -6,6 +6,7 @@ import ResetBlocksDialog from '@/Components/Editor/ResetBlocksDialog.vue'
 import PreviewFrame from '@/Components/Preview/PreviewFrame.vue'
 import { useBlocks } from '@/composables/useBlocks'
 import { usePublish } from '@/composables/usePublish'
+import { siteBlocksSnapshot } from '@/utils/siteBlocksSnapshot'
 import { Head, Link } from '@inertiajs/vue3'
 import { computed, ref } from 'vue'
 
@@ -70,7 +71,9 @@ const {
     destroyAllBlocks,
     pruneUnpublishedBlocks,
 } = useBlocks(initialBlocks)
-const { isDirty, markDirty, publish } = usePublish()
+const { isDirty, markDirty, resetDirty, publish } = usePublish()
+/** Línea base alineada con el servidor (publicar / volver a lo publicado / vaciar). */
+const publishedSnapshot = ref(props.site?.published_blocks_snapshot ?? null)
 const addBlockError = ref('')
 const publishError = ref('')
 const publishing = ref(false)
@@ -100,21 +103,18 @@ const hasUnpublishedActive = computed(() =>
     sortedBlocks.value.some((b) => b.is_active && !b.is_published),
 )
 
-/** Orden o contenido cambiaron respecto a la última publicación (updated_at > site.published_at). */
-const hasChangesSincePublished = computed(() => {
-    const publishedAt = props.site?.published_at
-    if (!publishedAt) return false
-    const t = new Date(publishedAt).getTime()
-    return sortedBlocks.value.some((b) => {
-        if (!b?.is_active) return false
-        const u = b.updated_at ? new Date(b.updated_at).getTime() : 0
-        return u > t
-    })
+/** Orden / props / pub difieren del snapshot guardado (misma lógica que borrador Blade). */
+const structuralPending = computed(() => {
+    const baseline = publishedSnapshot.value
+    if (baseline === null || baseline === undefined) {
+        return false
+    }
+    return siteBlocksSnapshot(sortedBlocks.value) !== baseline
 })
 
-/** Puede publicar: edición local, activos sin publicar o cambios desde la última publicación (p. ej. reordenar). */
+/** Puede publicar: edición local, activos sin publicar o estado estructural distinto al snapshot. */
 const canPublish = computed(
-    () => isDirty.value || hasUnpublishedActive.value || hasChangesSincePublished.value,
+    () => isDirty.value || hasUnpublishedActive.value || structuralPending.value,
 )
 
 /** Bloques con is_published = false (borradores; el backend los elimina al «volver a lo publicado»). */
@@ -161,8 +161,11 @@ async function handlePublish() {
     publishError.value = ''
     publishing.value = true
     try {
-        await publish()
+        const data = await publish()
         blocks.value = blocks.value.map((b) => (b.is_active ? { ...b, is_published: true } : b))
+        if (typeof data?.published_blocks_snapshot === 'string') {
+            publishedSnapshot.value = data.published_blocks_snapshot
+        }
     } catch (error) {
         publishError.value = error?.message || 'No se pudo publicar.'
     } finally {
@@ -197,11 +200,17 @@ async function handleBulkConfirm() {
 
     try {
         if (variant === 'deleteAll') {
-            await destroyAllBlocks()
+            const data = await destroyAllBlocks()
+            if (typeof data?.published_blocks_snapshot === 'string') {
+                publishedSnapshot.value = data.published_blocks_snapshot
+            }
         } else {
-            await pruneUnpublishedBlocks()
+            const data = await pruneUnpublishedBlocks()
+            if (typeof data?.published_blocks_snapshot === 'string') {
+                publishedSnapshot.value = data.published_blocks_snapshot
+            }
         }
-        markDirty()
+        resetDirty()
     } catch (error) {
         resetError.value = error?.message || 'No se pudo completar la acción.'
     } finally {

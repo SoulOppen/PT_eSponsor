@@ -399,7 +399,7 @@ Each partial receives the full **`$block`** model (p. ej. `$block->props`, `$blo
 - `/dashboard`: main editor to manage blocks.
 - `/dashboard/settings`: site configuration (name, slug, bio, avatar).
 - `/@{slug}`: creator's published public page.
-- `/draft/@{slug}`: full-page draft preview (active blocks, including unpublished) — **auth + verified** required; cualquier usuario autenticado puede abrirla, pero **solo el dueño** ve la barra para **publicar** y **reordenar bloques** por arrastre (mismas APIs que el editor). **Publicar** se habilita si hay bloques sin publicar, si hubo cambios de contenido desde `published_at`, o si **solo cambió el orden** (el reordenamiento actualiza `updated_at` de los bloques).
+- `/draft/@{slug}`: full-page draft preview (active blocks, including unpublished) — **auth + verified** required; cualquier usuario autenticado puede abrirla, pero **solo el dueño** ve la barra para **publicar** y **reordenar bloques** por arrastre (mismas APIs que el editor). **Publicar** se habilita si hay bloques activos sin publicar o si el estado actual (orden, props, `is_published` de cada bloque activo) **no coincide** con `sites.published_blocks_snapshot` guardado al publicar; **«Volver a lo publicado»** actualiza ese snapshot al eliminar borradores.
 
 ---
 

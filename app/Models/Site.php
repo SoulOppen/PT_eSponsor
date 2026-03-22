@@ -21,6 +21,7 @@ class Site extends Model
         'bio',
         'avatar_url',
         'published_at',
+        'published_blocks_snapshot',
     ];
 
     /**

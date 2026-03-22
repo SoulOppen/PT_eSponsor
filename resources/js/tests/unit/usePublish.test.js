@@ -16,6 +16,13 @@ describe('usePublish', () => {
         expect(isDirty.value).toBe(true)
     })
 
+    it('resetDirty sets isDirty to false', () => {
+        const { isDirty, markDirty, resetDirty } = usePublish()
+        markDirty()
+        resetDirty()
+        expect(isDirty.value).toBe(false)
+    })
+
     it('publish calls the API and resets isDirty', async () => {
         fetch.mockResolvedValueOnce({ ok: true, json: async () => ({}) })
         const { isDirty, markDirty, publish } = usePublish()

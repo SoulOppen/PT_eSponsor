@@ -2,7 +2,7 @@
 
 use App\Models\Block;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
+use App\Support\SitePublishState;
 
 it('draft preview redirects guests to login', function () {
     User::factory()->hasSite(['slug' => 'alice'])->create();
@@ -86,7 +86,11 @@ it('draft preview disables publish when all active blocks are already published'
         'is_active' => true,
         'is_published' => true,
     ]);
-    $owner->site->update(['published_at' => now()->addSecond()]);
+    $site = $owner->site->fresh();
+    $site->update([
+        'published_at' => now(),
+        'published_blocks_snapshot' => SitePublishState::snapshot($site->fresh()),
+    ]);
 
     $this->actingAs($owner)
         ->get('/draft/@all-pub')
@@ -96,23 +100,26 @@ it('draft preview disables publish when all active blocks are already published'
 
 it('draft preview enables publish after reorder when all blocks were already published', function () {
     $owner = User::factory()->hasSite(['slug' => 'reorder-pub'])->create();
-    $b1 = Block::factory()->create([
+    Block::factory()->create([
         'site_id' => $owner->site->id,
         'order' => 0,
         'is_active' => true,
         'is_published' => true,
     ]);
-    $b2 = Block::factory()->create([
+    Block::factory()->create([
         'site_id' => $owner->site->id,
         'order' => 1,
         'is_active' => true,
         'is_published' => true,
     ]);
-    $publishedAt = now()->subMinute();
-    $owner->site->update(['published_at' => $publishedAt]);
-    DB::table('blocks')->whereIn('id', [$b1->id, $b2->id])->update([
-        'updated_at' => $publishedAt->copy()->subSecond(),
+    $site = $owner->site->fresh();
+    $site->update([
+        'published_at' => now(),
+        'published_blocks_snapshot' => SitePublishState::snapshot($site->fresh()),
     ]);
+
+    $b1 = $site->blocks()->where('order', 0)->first();
+    $b2 = $site->blocks()->where('order', 1)->first();
 
     $this->actingAs($owner)
         ->get('/draft/@reorder-pub')
@@ -132,4 +139,38 @@ it('draft preview enables publish after reorder when all blocks were already pub
         ->get('/draft/@reorder-pub')
         ->assertOk()
         ->assertSee('data-can-publish="1"', false);
+});
+
+it('draft preview disables publish after volver a lo publicado when snapshot is realigned', function () {
+    $owner = User::factory()->hasSite(['slug' => 'prune-sync'])->create();
+    Block::factory()->create([
+        'site_id' => $owner->site->id,
+        'order' => 0,
+        'is_active' => true,
+        'is_published' => true,
+    ]);
+    $site = $owner->site->fresh();
+    $site->update([
+        'published_at' => now(),
+        'published_blocks_snapshot' => SitePublishState::snapshot($site->fresh()),
+    ]);
+
+    Block::factory()->create([
+        'site_id' => $owner->site->id,
+        'order' => 1,
+        'is_active' => true,
+        'is_published' => false,
+    ]);
+
+    $this->actingAs($owner)
+        ->get('/draft/@prune-sync')
+        ->assertOk()
+        ->assertSee('data-can-publish="1"', false);
+
+    $this->actingAs($owner)->deleteJson('/api/blocks/unpublished')->assertOk();
+
+    $this->actingAs($owner)
+        ->get('/draft/@prune-sync')
+        ->assertOk()
+        ->assertSee('data-can-publish="0"', false);
 });

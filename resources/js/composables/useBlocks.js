@@ -126,6 +126,11 @@ export function useBlocks(initialBlocks = []) {
             throw new Error(await readApiError(res, 'No se pudieron eliminar los bloques.'))
         }
         blocks.value = []
+        try {
+            return await res.json()
+        } catch {
+            return {}
+        }
     }
 
     async function pruneUnpublishedBlocks() {
@@ -134,6 +139,11 @@ export function useBlocks(initialBlocks = []) {
             throw new Error(await readApiError(res, 'No se pudieron quitar los borradores.'))
         }
         blocks.value = blocks.value.filter((b) => b.is_published)
+        try {
+            return await res.json()
+        } catch {
+            return {}
+        }
     }
 
     return {
