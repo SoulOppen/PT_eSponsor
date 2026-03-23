@@ -51,6 +51,10 @@ class AuthenticatedSessionController extends Controller
             $intended = $default;
         }
 
+        if ($this->shouldUseDashboardForDraftIntended($intended)) {
+            $intended = $default;
+        }
+
         return redirect()->to($intended);
     }
 
@@ -70,6 +74,26 @@ class AuthenticatedSessionController extends Controller
         $base = rtrim((string) config('app.url'), '/');
 
         return str_starts_with($url, $base.'/') || $url === $base;
+    }
+
+    /**
+     * Tras login, no volver a /draft/@slug: el destino pasa a ser el dashboard del usuario.
+     */
+    private function shouldUseDashboardForDraftIntended(string $intended): bool
+    {
+        $path = $this->intendedPath($intended);
+        return preg_match('#^/draft/@[a-z0-9\-]+$#', $path) === 1;
+    }
+
+    private function intendedPath(string $url): string
+    {
+        if (str_starts_with($url, '/') && ! str_starts_with($url, '//')) {
+            return $url;
+        }
+
+        $path = parse_url($url, PHP_URL_PATH);
+
+        return is_string($path) && $path !== '' ? $path : '/';
     }
 
     /**

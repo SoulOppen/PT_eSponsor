@@ -53,7 +53,7 @@ it('guest cannot access dashboard', function () {
     $this->get('/dashboard')->assertRedirect('/login');
 });
 
-it('redirects to intended url after login when redirected from auth middleware', function () {
+it('redirects to dashboard after login when intended url is a draft preview', function () {
     $user = User::factory()->hasSite(['slug' => 'alice'])->create([
         'password' => bcrypt('secret'),
         'email_verified_at' => now(),
@@ -64,7 +64,38 @@ it('redirects to intended url after login when redirected from auth middleware',
     $this->post('/login', [
         'email' => $user->email,
         'password' => 'secret',
-    ])->assertRedirect(url('/draft/@alice'));
+    ])->assertRedirect('/dashboard');
+});
+
+it('login redirects to dashboard when intended draft is another users site', function () {
+    User::factory()->hasSite(['slug' => 'bob'])->create();
+
+    $viewer = User::factory()->hasSite(['slug' => 'victor'])->create([
+        'password' => bcrypt('secret'),
+        'email_verified_at' => now(),
+    ]);
+
+    $this->get('/draft/@bob')->assertRedirect(route('login'));
+
+    $this->post('/login', [
+        'email' => $viewer->email,
+        'password' => 'secret',
+    ])->assertRedirect('/dashboard');
+});
+
+it('login redirects to dashboard when redirect field targets another users draft', function () {
+    User::factory()->hasSite(['slug' => 'bob'])->create();
+
+    $viewer = User::factory()->hasSite(['slug' => 'victor'])->create([
+        'password' => bcrypt('secret'),
+        'email_verified_at' => now(),
+    ]);
+
+    $this->post('/login', [
+        'email' => $viewer->email,
+        'password' => 'secret',
+        'redirect' => '/draft/@bob',
+    ])->assertRedirect('/dashboard');
 });
 
 it('login ignores unsafe redirect query param', function () {
