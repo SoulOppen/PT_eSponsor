@@ -58,7 +58,8 @@ it('draft preview shows edit toolbar for site owner only', function () {
     $this->actingAs($other)
         ->get('/draft/@owner-site')
         ->assertOk()
-        ->assertDontSee('id="draft-edit-toolbar"', false);
+        ->assertDontSee('id="draft-edit-toolbar"', false)
+        ->assertSee('Ir a tu editor');
 });
 
 it('draft preview enables publish when there are unpublished active blocks', function () {

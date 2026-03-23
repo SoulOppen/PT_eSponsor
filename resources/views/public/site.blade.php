@@ -136,6 +136,11 @@
         <strong>Vista previa (borrador)</strong>
         — Solo usuarios conectados. Incluye bloques activos aún no publicados.
         <a href="{{ url('/@'.$site->slug) }}" style="color: #b45309; margin-left: 0.5rem;">Ver página pública ↗</a>
+        <a
+            href="{{ route('dashboard') }}"
+            style="display: inline-flex; align-items: center; margin-left: 0.5rem; color: #4338ca; font-weight: 600; text-decoration: underline;"
+            title="Editor de tu página"
+        >Ir a tu editor</a>
     </div>
 @endif
 <main>

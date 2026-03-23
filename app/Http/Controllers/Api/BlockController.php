@@ -74,20 +74,26 @@ class BlockController extends Controller
     }
 
     /**
-     * Elimina todos los bloques del sitio del usuario (acción irreversible).
+     * Elimina todos los bloques del sitio del usuario.
+     * Conserva `published_blocks_snapshot` para permitir «volver a lo publicado».
      */
     public function destroyAll(Request $request): JsonResponse
     {
         $site = $this->userSite($request);
+        $site->refresh();
+        $baselineSnapshot = $site->published_blocks_snapshot;
+
         $site->blocks()->delete();
 
-        $empty = SitePublishState::snapshot($site->fresh());
+        $snapshot = is_string($baselineSnapshot) && $baselineSnapshot !== ''
+            ? $baselineSnapshot
+            : SitePublishState::snapshot($site->fresh());
 
-        $site->update(['published_blocks_snapshot' => $empty]);
+        $site->update(['published_blocks_snapshot' => $snapshot]);
 
         return response()->json([
             'ok' => true,
-            'published_blocks_snapshot' => $empty,
+            'published_blocks_snapshot' => $snapshot,
         ]);
     }
 

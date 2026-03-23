@@ -85,6 +85,37 @@ it('user can delete all blocks on their site', function () {
     expect($user->site->fresh()->blocks)->toHaveCount(0);
 });
 
+it('delete all keeps baseline snapshot so user can restore published blocks', function () {
+    $user = User::factory()->hasSite()->create();
+    $site = $user->site->fresh();
+
+    $published = Block::factory()->create([
+        'site_id' => $site->id,
+        'type' => 'text',
+        'props' => ['content' => 'Publicado'],
+        'order' => 0,
+        'is_active' => true,
+        'is_published' => true,
+    ]);
+
+    $site->update([
+        'published_at' => now(),
+        'published_blocks_snapshot' => SitePublishState::snapshot($site->fresh()),
+    ]);
+
+    $publishedId = $published->id;
+
+    $this->actingAs($user)->deleteJson('/api/blocks/all')->assertOk();
+    expect($site->fresh()->blocks)->toHaveCount(0);
+
+    $this->actingAs($user)->deleteJson('/api/blocks/unpublished')->assertOk();
+
+    $restored = Block::find($publishedId);
+    expect($restored)->not->toBeNull();
+    expect($restored->props['content'])->toBe('Publicado');
+    expect($restored->is_published)->toBeTrue();
+});
+
 it('user can delete only unpublished blocks', function () {
     $user = User::factory()->hasSite()->create();
     $siteId = $user->site->id;
