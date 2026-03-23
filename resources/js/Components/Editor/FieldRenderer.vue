@@ -4,6 +4,7 @@ import { computed } from 'vue'
 const props = defineProps({
     field: { type: Object, required: true },
     modelValue: { type: [String, Number, Boolean, Array, Object, null], default: null },
+    disabled: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -78,12 +79,14 @@ function shouldShowSubfield(row, sub) {
                         :class="textLikeClass"
                         :name="`${field.key}.${rowIndex}.${sub.key}`"
                         :value="row[sub.key] ?? ''"
+                        :disabled="disabled"
                         @input="updateSubfield(rowIndex, sub.key, $event.target.value)"
                     />
                     <select
                         v-else-if="sub.type === 'select'"
                         :class="`${textLikeClass} bg-white`"
                         :value="row[sub.key] ?? ''"
+                        :disabled="disabled"
                         @change="updateSubfield(rowIndex, sub.key, $event.target.value)"
                     >
                         <option v-for="opt in sub.options || []" :key="opt" :value="opt">
@@ -94,6 +97,7 @@ function shouldShowSubfield(row, sub) {
                         v-else-if="sub.type === 'textarea'"
                         :class="textareaClass"
                         :value="row[sub.key] ?? ''"
+                        :disabled="disabled"
                         @input="updateSubfield(rowIndex, sub.key, $event.target.value)"
                     />
                     <input
@@ -101,6 +105,7 @@ function shouldShowSubfield(row, sub) {
                         type="text"
                         :class="textLikeClass"
                         :value="row[sub.key] ?? ''"
+                        :disabled="disabled"
                         @input="updateSubfield(rowIndex, sub.key, $event.target.value)"
                     />
                 </div>
@@ -109,8 +114,9 @@ function shouldShowSubfield(row, sub) {
 
                 <button
                     type="button"
-                    class="min-h-9 w-full touch-manipulation rounded-md text-sm font-medium text-red-700 ring-1 ring-red-200 active:bg-red-50 sm:w-auto sm:px-3"
+                    class="min-h-9 w-full touch-manipulation rounded-md text-sm font-medium text-red-700 ring-1 ring-red-200 active:bg-red-50 enabled:cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:px-3"
                     data-action="repeater-remove"
+                    :disabled="disabled"
                     @click="removeRepeaterRow(rowIndex)"
                 >
                     Quitar fila
@@ -118,8 +124,9 @@ function shouldShowSubfield(row, sub) {
             </div>
             <button
                 type="button"
-                class="min-h-11 w-full touch-manipulation rounded-lg bg-indigo-600 px-3 text-sm font-semibold text-white active:bg-indigo-700"
+                class="min-h-11 w-full touch-manipulation rounded-lg bg-indigo-600 px-3 text-sm font-semibold text-white active:bg-indigo-700 enabled:cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                 data-action="repeater-add"
+                :disabled="disabled"
                 @click="addRepeaterRow"
             >
                 Añadir fila
@@ -132,6 +139,7 @@ function shouldShowSubfield(row, sub) {
             :class="textLikeClass"
             :name="field.key"
             :value="modelValue ?? ''"
+            :disabled="disabled"
             @input="onInput"
         />
         <textarea
@@ -139,6 +147,7 @@ function shouldShowSubfield(row, sub) {
             :class="textareaClass"
             :name="field.key"
             :value="modelValue ?? ''"
+            :disabled="disabled"
             @input="onInput"
         />
         <input
@@ -149,6 +158,7 @@ function shouldShowSubfield(row, sub) {
             autocomplete="url"
             :name="field.key"
             :value="modelValue ?? ''"
+            :disabled="disabled"
             @input="onInput"
         />
         <input
@@ -157,6 +167,7 @@ function shouldShowSubfield(row, sub) {
             :class="colorClass"
             :name="field.key"
             :value="modelValue || '#000000'"
+            :disabled="disabled"
             @input="onInput"
         />
         <select
@@ -164,6 +175,7 @@ function shouldShowSubfield(row, sub) {
             :class="`${textLikeClass} bg-white`"
             :name="field.key"
             :value="modelValue ?? ''"
+            :disabled="disabled"
             @change="onInput"
         >
             <option v-for="opt in field.options || []" :key="opt" :value="opt">
@@ -176,6 +188,7 @@ function shouldShowSubfield(row, sub) {
             :class="textLikeClass"
             :name="field.key"
             :value="modelValue ?? ''"
+            :disabled="disabled"
             @input="onInput"
         />
     </div>

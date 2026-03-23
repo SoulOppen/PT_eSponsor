@@ -1,6 +1,7 @@
 <script setup>
 defineProps({
     block: { type: Object, required: true },
+    disabled: { type: Boolean, default: false },
 })
 
 defineEmits(['delete', 'toggle', 'duplicate'])
@@ -20,7 +21,8 @@ defineEmits(['delete', 'toggle', 'duplicate'])
                 data-action="delete"
                 title="Eliminar bloque"
                 aria-label="Eliminar bloque"
-                class="inline-flex min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 text-red-800 active:bg-red-100 sm:min-h-0 sm:min-w-0 sm:px-3 sm:py-2"
+                :disabled="disabled"
+                class="inline-flex min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 text-red-800 active:bg-red-100 enabled:cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-0 sm:min-w-0 sm:px-3 sm:py-2"
                 @click="$emit('delete')"
             >
                 <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -36,7 +38,8 @@ defineEmits(['delete', 'toggle', 'duplicate'])
                 data-action="toggle"
                 :title="block.is_active ? 'Ocultar bloque' : 'Activar bloque'"
                 :aria-label="block.is_active ? 'Ocultar bloque' : 'Activar bloque'"
-                class="inline-flex min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-gray-800 active:bg-gray-100 sm:min-h-0 sm:min-w-0 sm:px-3 sm:py-2"
+                :disabled="disabled"
+                class="inline-flex min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-gray-800 active:bg-gray-100 enabled:cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-0 sm:min-w-0 sm:px-3 sm:py-2"
                 @click="$emit('toggle')"
             >
                 <svg v-if="block.is_active" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -52,7 +55,8 @@ defineEmits(['delete', 'toggle', 'duplicate'])
                 data-action="duplicate"
                 title="Duplicar bloque"
                 aria-label="Duplicar bloque"
-                class="inline-flex min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 px-3 text-indigo-800 active:bg-indigo-100 sm:min-h-0 sm:min-w-0 sm:px-3 sm:py-2"
+                :disabled="disabled"
+                class="inline-flex min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 px-3 text-indigo-800 active:bg-indigo-100 enabled:cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-0 sm:min-w-0 sm:px-3 sm:py-2"
                 @click="$emit('duplicate')"
             >
                 <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">

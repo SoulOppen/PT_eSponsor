@@ -399,7 +399,7 @@ Each partial receives the full **`$block`** model (p. ej. `$block->props`, `$blo
 - `/dashboard`: main editor to manage blocks.
 - `/dashboard/settings`: site configuration (name, slug, bio, avatar).
 - `/@{slug}`: creator's published public page.
-- `/draft/@{slug}`: full-page draft preview (active blocks, including unpublished) — **auth + verified** required; cualquier usuario autenticado puede abrirla, pero **solo el dueño** ve la barra para **publicar** y **reordenar bloques** por arrastre (mismas APIs que el editor). **Publicar** se habilita si hay bloques activos sin publicar o si el estado actual (orden, props, `is_published` de cada bloque activo) **no coincide** con `sites.published_blocks_snapshot` guardado al publicar; **«Volver a lo publicado»** elimina borradores, **restaura el orden** de los bloques ya publicados según el último snapshot y vuelve a alinear el fingerprint.
+- `/draft/@{slug}`: full-page draft preview (active blocks, including unpublished) — **auth + verified** required; cualquier usuario autenticado puede abrirla, pero **solo el dueño** ve la barra para **publicar** y **reordenar bloques** por arrastre (mismas APIs que el editor). **Publicar** se habilita si hay bloques activos sin publicar o si el estado actual (orden, props, `is_published` de cada bloque activo) **no coincide** con `sites.published_blocks_snapshot` guardado al publicar; **«Volver a lo publicado»** deja **la misma lista y cantidad de bloques** que el último snapshot (quita borradores y bloques cuyo id no estaba en esa publicación), **restaura el orden y el contenido (`props`)** de cada bloque según ese snapshot, y realinea el fingerprint.
 
 ---
 

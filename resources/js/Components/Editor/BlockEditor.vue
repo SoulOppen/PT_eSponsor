@@ -5,6 +5,7 @@ import FieldRenderer from './FieldRenderer.vue'
 const props = defineProps({
     schema: { type: Object, required: true },
     modelValue: { type: Object, required: true },
+    disabled: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -40,6 +41,7 @@ function valueForField(f) {
             :key="f.key"
             :field="f"
             :model-value="valueForField(f)"
+            :disabled="disabled"
             @update:model-value="(v) => updateKey(f.key, v)"
         />
     </div>

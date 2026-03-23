@@ -92,8 +92,8 @@ class BlockController extends Controller
     }
 
     /**
-     * Elimina solo bloques aún no publicados (borradores). Los que ya están en la
-     * página pública (is_published = true) se mantienen.
+     * «Volver a lo publicado»: alinea cantidad, orden y props con el último snapshot guardado
+     * (ids permitidos + order + p). Sin snapshot en BD, solo quita borradores (is_published = false).
      */
     public function destroyUnpublished(Request $request): JsonResponse
     {
@@ -102,10 +102,11 @@ class BlockController extends Controller
 
         $baselineSnapshot = $site->published_blocks_snapshot;
 
-        $site->blocks()->where('is_published', false)->delete();
+        SitePublishState::pruneSiteBlocksToBaseline($site, $baselineSnapshot);
 
         if (is_string($baselineSnapshot) && $baselineSnapshot !== '') {
-            SitePublishState::restorePublishedBlockOrdersFromSnapshot($site, $baselineSnapshot);
+            $site->refresh();
+            SitePublishState::restorePublishedBlocksFromSnapshot($site, $baselineSnapshot);
         }
 
         $site->refresh();

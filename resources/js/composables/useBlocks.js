@@ -106,18 +106,25 @@ export function useBlocks(initialBlocks = []) {
      */
     async function reorderBlocks(orderedIds) {
         const rows = orderedIds.map((id, order) => ({ id: Number(id), order }))
+        const orderById = Object.fromEntries(orderedIds.map((id, i) => [Number(id), i]))
+        const prev = blocks.value.map((b) => ({
+            ...b,
+            props: { ...(b.props || {}) },
+        }))
+
+        blocks.value = blocks.value.map((b) => ({
+            ...b,
+            order: orderById[Number(b.id)] ?? orderById[b.id] ?? b.order,
+        }))
+
         const res = await apiJson('/api/blocks/reorder', {
             method: 'POST',
             body: JSON.stringify({ blocks: rows }),
         })
         if (!res.ok) {
+            blocks.value = prev
             throw new Error(await readApiError(res, 'No se pudo reordenar los bloques.'))
         }
-        const orderById = Object.fromEntries(orderedIds.map((id, i) => [Number(id), i]))
-        blocks.value = blocks.value.map((b) => ({
-            ...b,
-            order: orderById[b.id] ?? b.order,
-        }))
     }
 
     async function destroyAllBlocks() {

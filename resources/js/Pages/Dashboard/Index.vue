@@ -7,8 +7,14 @@ import PreviewFrame from '@/Components/Preview/PreviewFrame.vue'
 import { useBlocks } from '@/composables/useBlocks'
 import { usePublish } from '@/composables/usePublish'
 import { siteBlocksSnapshot } from '@/utils/siteBlocksSnapshot'
+import {
+    currentMatchesPublishedBaseline,
+    orderMatchesPublishedBaseline,
+    parsePublishedBlocksSnapshot,
+    toSnapshotJsonString,
+} from '@/utils/publishedBaseline'
 import { Head, Link } from '@inertiajs/vue3'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 const props = defineProps({
     site: { type: Object, required: true },
@@ -72,13 +78,26 @@ const {
     pruneUnpublishedBlocks,
 } = useBlocks(initialBlocks)
 const { isDirty, markDirty, resetDirty, publish } = usePublish()
-/** Línea base alineada con el servidor (publicar / volver a lo publicado / vaciar). */
-const publishedSnapshot = ref(props.site?.published_blocks_snapshot ?? null)
+/** JSON de última publicación; se actualiza al publicar, restaurar, vaciar o al cambiar `props.site` (Inertia). */
+const publishedSnapshot = ref(toSnapshotJsonString(props.site?.published_blocks_snapshot))
+
+watch(
+    () => props.site?.published_blocks_snapshot,
+    (snap) => {
+        publishedSnapshot.value = toSnapshotJsonString(snap)
+    },
+)
+/** Filas parseadas del snapshot publicado (orden, ids, props, pub). Se recalcula con `publishedSnapshot`. */
+const publishedBaselineRows = computed(() => parsePublishedBlocksSnapshot(publishedSnapshot.value))
+/** Snapshot canónico de bloques activos actuales (misma regla que el servidor). */
+const currentSnapshotString = computed(() => siteBlocksSnapshot(sortedBlocks.value))
 const addBlockError = ref('')
 const publishError = ref('')
 const publishing = ref(false)
 const resetError = ref('')
 const resettingBlocks = ref(false)
+/** No permitir editar mientras publica o restaura/vacía bloques en servidor. */
+const editorBusy = computed(() => publishing.value || resettingBlocks.value)
 /** Diálogo masivo: eliminar todo vs quitar solo borradores (no publicados) */
 const bulkDialog = ref({ show: false, variant: 'deleteAll' })
 const mobilePanel = ref('blocks')
@@ -103,14 +122,15 @@ const hasUnpublishedActive = computed(() =>
     sortedBlocks.value.some((b) => b.is_active && !b.is_published),
 )
 
-/** Orden / props / pub difieren del snapshot guardado (misma lógica que borrador Blade). */
-const structuralPending = computed(() => {
-    const baseline = publishedSnapshot.value
-    if (baseline === null || baseline === undefined) {
-        return false
-    }
-    return siteBlocksSnapshot(sortedBlocks.value) !== baseline
-})
+/**
+ * Contenido (props/pub) o secuencia id:order de bloques activos difiere de la última publicación.
+ * Incluye subir/bajar y arrastre (misma huella que el snapshot del servidor).
+ */
+const structuralPending = computed(
+    () =>
+        !currentMatchesPublishedBaseline(currentSnapshotString.value, publishedSnapshot.value) ||
+        !orderMatchesPublishedBaseline(sortedBlocks.value, publishedSnapshot.value),
+)
 
 /** Puede publicar: edición local, activos sin publicar o estado estructural distinto al snapshot. */
 const canPublish = computed(
@@ -120,8 +140,21 @@ const canPublish = computed(
 /** Bloques con is_published = false (borradores; el backend los elimina al «volver a lo publicado»). */
 const unpublishedCount = computed(() => sortedBlocks.value.filter((b) => !b.is_published).length)
 const hasUnpublishedDrafts = computed(() => unpublishedCount.value > 0)
+/**
+ * Lista/orden/props de bloques activos igual que `published_blocks_snapshot` y sin borradores.
+ * Al publicar se recarga el snapshot → suele quedar en true y se desactiva «Volver a lo publicado».
+ */
+const isAlignedWithPublishedSnapshot = computed(
+    () =>
+        currentMatchesPublishedBaseline(currentSnapshotString.value, publishedSnapshot.value) &&
+        orderMatchesPublishedBaseline(sortedBlocks.value, publishedSnapshot.value) &&
+        !hasUnpublishedDrafts.value,
+)
+/** Solo tiene sentido restaurar si hay borradores o el editor difiere de la línea base publicada. */
+const canPruneToPublished = computed(() => !isAlignedWithPublishedSnapshot.value)
 
 async function handleAddType(type) {
+    if (editorBusy.value) return
     addBlockError.value = ''
     try {
         await addBlock(type, defaultPropsForType(type))
@@ -132,6 +165,7 @@ async function handleAddType(type) {
 }
 
 async function handleDelete(id) {
+    if (editorBusy.value) return
     resetError.value = ''
     try {
         await removeBlock(id)
@@ -142,29 +176,32 @@ async function handleDelete(id) {
 }
 
 async function handleToggle(id) {
+    if (editorBusy.value) return
     await toggleBlock(id)
     markDirty()
 }
 
 async function handleDuplicate(id) {
+    if (editorBusy.value) return
     await duplicateBlock(id)
     markDirty()
 }
 
 async function handleUpdateProps(id, newProps) {
+    if (editorBusy.value) return
     await updateBlock(id, newProps)
     markDirty()
 }
 
 async function handlePublish() {
-    if (!canPublish.value || publishing.value) return
+    if (!canPublish.value || editorBusy.value) return
     publishError.value = ''
     publishing.value = true
     try {
         const data = await publish()
         blocks.value = blocks.value.map((b) => (b.is_active ? { ...b, is_published: true } : b))
-        if (typeof data?.published_blocks_snapshot === 'string') {
-            publishedSnapshot.value = data.published_blocks_snapshot
+        if (data?.published_blocks_snapshot != null && data?.published_blocks_snapshot !== '') {
+            publishedSnapshot.value = toSnapshotJsonString(data.published_blocks_snapshot)
         }
     } catch (error) {
         publishError.value = error?.message || 'No se pudo publicar.'
@@ -174,8 +211,12 @@ async function handlePublish() {
 }
 
 async function handleReorder(orderedIds) {
-    await reorderBlocks(orderedIds)
-    markDirty()
+    if (editorBusy.value) return
+    try {
+        await reorderBlocks(orderedIds)
+    } catch (error) {
+        resetError.value = error?.message || 'No se pudo reordenar.'
+    }
 }
 
 function closeBulkDialog() {
@@ -186,9 +227,9 @@ function closeBulkDialog() {
  * @param {'deleteAll' | 'pruneUnpublished'} variant
  */
 function openBulkDialog(variant) {
-    if (resettingBlocks.value) return
+    if (editorBusy.value) return
     if (variant === 'deleteAll' && !hasBlocks.value) return
-    if (variant === 'pruneUnpublished' && !hasUnpublishedDrafts.value) return
+    if (variant === 'pruneUnpublished' && !canPruneToPublished.value) return
     bulkDialog.value = { show: true, variant }
 }
 
@@ -201,13 +242,13 @@ async function handleBulkConfirm() {
     try {
         if (variant === 'deleteAll') {
             const data = await destroyAllBlocks()
-            if (typeof data?.published_blocks_snapshot === 'string') {
-                publishedSnapshot.value = data.published_blocks_snapshot
+            if (data?.published_blocks_snapshot != null && data?.published_blocks_snapshot !== '') {
+                publishedSnapshot.value = toSnapshotJsonString(data.published_blocks_snapshot)
             }
         } else {
             const data = await pruneUnpublishedBlocks()
-            if (typeof data?.published_blocks_snapshot === 'string') {
-                publishedSnapshot.value = data.published_blocks_snapshot
+            if (data?.published_blocks_snapshot != null && data?.published_blocks_snapshot !== '') {
+                publishedSnapshot.value = toSnapshotJsonString(data.published_blocks_snapshot)
             }
         }
         resetDirty()
@@ -271,7 +312,7 @@ async function handleBulkConfirm() {
                         type="button"
                         class="min-h-11 w-full touch-manipulation rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 enabled:active:bg-indigo-700 sm:w-auto sm:py-2 disabled:cursor-not-allowed disabled:opacity-50"
                         data-action="publish"
-                        :disabled="!canPublish || publishing"
+                        :disabled="!canPublish || editorBusy"
                         @click="handlePublish"
                     >
                         {{ publishing ? 'Publicando…' : 'Publicar' }}
@@ -292,7 +333,12 @@ async function handleBulkConfirm() {
                     >
                         {{ addBlockError }}
                     </p>
-                    <BlockCatalog :schemas="blockSchemas" :counts="blockTypeCounts" @select="handleAddType" />
+                    <BlockCatalog
+                        :schemas="blockSchemas"
+                        :counts="blockTypeCounts"
+                        :disabled="editorBusy"
+                        @select="handleAddType"
+                    />
                 </section>
 
                 <div class="mb-3 grid grid-cols-2 gap-2 rounded-lg bg-gray-100 p-1 lg:hidden">
@@ -338,9 +384,15 @@ async function handleBulkConfirm() {
                                 <button
                                     type="button"
                                     class="inline-flex min-h-10 items-center gap-1.5 rounded-md border border-amber-200 bg-white px-3 text-sm font-medium text-amber-900 hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-50"
-                                    :disabled="!hasUnpublishedDrafts || resettingBlocks"
+                                    :disabled="!canPruneToPublished || editorBusy"
                                     data-action="prune-unpublished-blocks"
-                                    title="Quita solo los bloques que aún no están en tu página pública"
+                                    :title="
+                                        'Línea base publicada: ' +
+                                        (publishedBaselineRows == null
+                                            ? 'sin snapshot'
+                                            : publishedBaselineRows.length + ' bloque(s)') +
+                                        '. Restaura lista, orden y contenido de bloques a esa publicación. Si coinciden y no hay borradores, este botón se desactiva.'
+                                    "
                                     @click="openBulkDialog('pruneUnpublished')"
                                 >
                                     <svg class="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -355,7 +407,7 @@ async function handleBulkConfirm() {
                                 <button
                                     type="button"
                                     class="inline-flex min-h-10 items-center gap-2 rounded-md border border-red-200 bg-white px-3 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-                                    :disabled="!hasBlocks || resettingBlocks"
+                                    :disabled="!hasBlocks || editorBusy"
                                     data-action="delete-all-blocks"
                                     @click="openBulkDialog('deleteAll')"
                                 >
@@ -379,6 +431,7 @@ async function handleBulkConfirm() {
                         <BlockList
                             :blocks="sortedBlocks"
                             :block-schemas="blockSchemas"
+                            :disabled="editorBusy"
                             @delete="handleDelete"
                             @toggle="handleToggle"
                             @duplicate="handleDuplicate"

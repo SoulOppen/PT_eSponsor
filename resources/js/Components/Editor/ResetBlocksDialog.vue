@@ -20,7 +20,7 @@ const title = computed(() =>
 
 const confirmLabel = computed(() => {
     if (props.loading) {
-        return props.variant === 'pruneUnpublished' ? 'Quitando borradores…' : 'Eliminando…'
+        return props.variant === 'pruneUnpublished' ? 'Restaurando versión publicada…' : 'Eliminando…'
     }
     return props.variant === 'pruneUnpublished' ? 'Sí, volver a lo publicado' : 'Sí, eliminar todo'
 })
@@ -55,14 +55,23 @@ const isPrune = computed(() => props.variant === 'pruneUnpublished')
                 <div class="min-w-0">
                     <h4 class="text-base font-semibold text-gray-900">{{ title }}</h4>
                     <p v-if="isPrune" class="mt-1 text-sm text-gray-600">
-                        Se eliminarán
-                        <strong>{{ count }}</strong>
-                        bloque(s) que aún no están en tu página pública (borradores). Los bloques ya publicados se
-                        mantienen y
-                        <strong>vuelven al orden</strong>
-                        de la última publicación.
+                        Tu página volverá a la
+                        <strong>última versión publicada</strong>
+                        : mismo
+                        <strong>número y lista de bloques</strong>
+                        (se quitan borradores y cualquier bloque que añadieras después sin coincidir con esa
+                        publicación), el
+                        <strong>orden</strong>
+                        y el
+                        <strong>contenido guardado en cada bloque</strong>
+                        (textos, enlaces, etc.) tal como estaban al publicar.
                     </p>
-                    <p v-else class="mt-1 text-sm text-gray-600">
+                    <p v-if="isPrune && count > 0" class="mt-2 text-sm text-gray-600">
+                        Incluye
+                        <strong>{{ count }}</strong>
+                        borrador(es) que se eliminarán.
+                    </p>
+                    <p v-else-if="!isPrune" class="mt-1 text-sm text-gray-600">
                         Vas a eliminar
                         <strong>{{ count }}</strong>
                         bloque(s). Esta acción no se puede deshacer.

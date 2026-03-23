@@ -99,6 +99,105 @@ it('user can delete only unpublished blocks', function () {
     expect(Block::find($live->id))->not->toBeNull();
 });
 
+it('prune unpublished removes published blocks not listed in baseline snapshot', function () {
+    $user = User::factory()->hasSite()->create();
+    $a = Block::factory()->create([
+        'site_id' => $user->site->id,
+        'order' => 0,
+        'is_active' => true,
+        'is_published' => true,
+    ]);
+    $b = Block::factory()->create([
+        'site_id' => $user->site->id,
+        'order' => 1,
+        'is_active' => true,
+        'is_published' => true,
+    ]);
+    $site = $user->site->fresh();
+    $site->update([
+        'published_at' => now(),
+        'published_blocks_snapshot' => SitePublishState::snapshot($site->fresh()),
+    ]);
+    $extra = Block::factory()->create([
+        'site_id' => $user->site->id,
+        'order' => 2,
+        'is_active' => true,
+        'is_published' => true,
+    ]);
+
+    $this->actingAs($user)->deleteJson('/api/blocks/unpublished')->assertOk();
+
+    expect(Block::find($extra->id))->toBeNull();
+    expect(Block::find($a->id))->not->toBeNull();
+    expect(Block::find($b->id))->not->toBeNull();
+});
+
+it('prune unpublished with empty baseline snapshot deletes all blocks', function () {
+    $user = User::factory()->hasSite()->create();
+    Block::factory()->create([
+        'site_id' => $user->site->id,
+        'is_active' => true,
+        'is_published' => true,
+    ]);
+    $user->site->update([
+        'published_at' => now(),
+        'published_blocks_snapshot' => '[]',
+    ]);
+
+    $this->actingAs($user)->deleteJson('/api/blocks/unpublished')->assertOk();
+
+    expect($user->site->fresh()->blocks)->toHaveCount(0);
+});
+
+it('prune unpublished restores block props from baseline snapshot', function () {
+    $user = User::factory()->hasSite()->create();
+    $block = Block::factory()->create([
+        'site_id' => $user->site->id,
+        'type' => 'text',
+        'props' => ['content' => 'Texto publicado'],
+        'order' => 0,
+        'is_active' => true,
+        'is_published' => true,
+    ]);
+    $site = $user->site->fresh();
+    $site->update([
+        'published_at' => now(),
+        'published_blocks_snapshot' => SitePublishState::snapshot($site->fresh()),
+    ]);
+
+    $block->update(['props' => ['content' => 'Cambio local sin publicar']]);
+
+    $this->actingAs($user)->deleteJson('/api/blocks/unpublished')->assertOk();
+
+    expect($block->fresh()->props['content'])->toBe('Texto publicado');
+});
+
+it('prune unpublished recreates a published block deleted from DB using snapshot', function () {
+    $user = User::factory()->hasSite()->create();
+    $block = Block::factory()->create([
+        'site_id' => $user->site->id,
+        'type' => 'text',
+        'props' => ['content' => 'Texto publicado'],
+        'order' => 0,
+        'is_active' => true,
+        'is_published' => true,
+    ]);
+    $site = $user->site->fresh();
+    $site->update([
+        'published_at' => now(),
+        'published_blocks_snapshot' => SitePublishState::snapshot($site->fresh()),
+    ]);
+
+    $blockId = $block->id;
+    $block->delete();
+
+    $this->actingAs($user)->deleteJson('/api/blocks/unpublished')->assertOk();
+
+    $again = Block::find($blockId);
+    expect($again)->not->toBeNull();
+    expect($again->props['content'])->toBe('Texto publicado');
+});
+
 it('prune unpublished restores order of published blocks from snapshot', function () {
     $user = User::factory()->hasSite()->create();
     $b1 = Block::factory()->create([

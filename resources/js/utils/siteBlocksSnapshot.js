@@ -1,7 +1,7 @@
 /**
  * Debe coincidir con App\Support\SitePublishState::snapshot (PHP) para el dashboard.
  */
-function normalizeProps(props) {
+export function normalizeProps(props) {
     if (props === null || typeof props !== 'object') {
         return props
     }
@@ -29,6 +29,7 @@ export function siteBlocksSnapshot(blocks) {
     const payload = active.map((b) => ({
         id: Number(b.id),
         order: Number(b.order ?? 0),
+        t: typeof b.type === 'string' && b.type !== '' ? b.type : 'text',
         p: normalizeProps(b.props && typeof b.props === 'object' ? b.props : {}),
         pub: !!b.is_published,
     }))

@@ -19,4 +19,10 @@ describe('BlockCatalog', () => {
         await wrapper.find('[data-block-type="text"]').trigger('click')
         expect(wrapper.emitted('select')[0][0]).toBe('text')
     })
+
+    it('does not emit select when disabled', async () => {
+        const wrapper = mount(BlockCatalog, { props: { schemas, disabled: true } })
+        await wrapper.find('[data-block-type="text"]').trigger('click')
+        expect(wrapper.emitted('select')).toBeUndefined()
+    })
 })
