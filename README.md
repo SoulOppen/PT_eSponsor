@@ -18,6 +18,7 @@
 - [Running tests](#running-tests)
 - [Git workflow](#git-workflow)
 - [Project structure](#project-structure)
+- [Recording walkthrough (recommended order)](#recording-walkthrough-recommended-order)
 - [Block system](#block-system)
 - [Public page strategy](#public-page-strategy)
 - [Page goals](#page-goals)
@@ -343,6 +344,40 @@ Types: feat | fix | refactor | test | docs | chore | style | perf
 
 - La API bajo `/api/*` usa **sesión web** (cookies + CSRF), igual que Inertia; no hace falta token Sanctum para el editor.
 - La validación de `props` frente al esquema vive en `Api\BlockController` (no hay `FormRequest` dedicado ni `JsonResource` para bloques).
+
+---
+
+## Recording walkthrough (recommended order)
+
+Use this flow for demos, technical reviews, or handoff recordings:
+
+1. **Intro + structure (2 min)**  
+   Explain stack, monolithic architecture, and high-level folders (`app`, `resources/js`, `resources/views`, `routes`, `database`, `tests`).
+2. **Routes (1.5 min)**  
+   Show `routes/web.php`, `routes/api.php`, and `routes/auth.php` to map public page, dashboard, draft preview, and API endpoints.
+3. **Models + migrations (2 min)**  
+   Cover `User`, `Site`, `Block`, plus migrations (`sites`, `blocks`, snapshot column) and relation model.
+4. **Controllers (3 min)**  
+   Focus on `Api\BlockController`, `Api\SitePublishController`, `DashboardController`, and `PublicPageController`.
+5. **Policies (1 min)**  
+   Show `BlockPolicy` ownership checks and where `authorize()` is enforced in controllers.
+6. **Dashboard Vue (2 min)**  
+   Explain `resources/js/Pages/Dashboard/Index.vue`, composables (`useBlocks`, `usePublish`), and editor components.
+7. **Public page + controller (2.5 min)**  
+   Show `PublicPageController` + `resources/views/public/site.blade.php` + block partials.
+8. **Summary (0.5 min)**  
+   Close with publish workflow, snapshot strategy, and test coverage.
+
+### Next steps (to mention in the script)
+
+- Restrict `/draft/@slug` access to the site owner and explicitly authorized collaborators.
+- Improve block system UX (better field validation, richer block presets, and clearer reorder affordances).
+- Add end-to-end coverage for critical flows (register → edit blocks → publish → public page assertions).
+- Implement contact flow (mail + query handling) for public pages.
+- Introduce collaborator roles/permissions for safe shared editing.
+- Add audit trail for publish/reset/reorder actions (who changed what and when).
+- Add optional caching layer for public pages with explicit cache invalidation rules.
+- Add production observability basics (error tracking, structured logs, and health checks).
 
 ---
 
