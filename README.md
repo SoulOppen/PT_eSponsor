@@ -29,13 +29,14 @@
 
 ## Demo
 
-| Credential    | Value                  |
-|---------------|------------------------|
-| Email         | `demo@example.com`     |
-| Password      | `password`             |
-| Public page   | `http://localhost:8000/@demo` |
+| Credential  | Value                         |
+| ----------- | ----------------------------- |
+| Email       | `demo@example.com`            |
+| Password    | `password`                    |
+| Public page | `http://localhost:8000/@demo` |
 
 Seed the demo account with:
+
 ```bash
 php artisan db:seed --class=DemoSeeder
 ```
@@ -55,30 +56,30 @@ php artisan db:seed --class=DemoSeeder
 
 ### Block catalogue (MVP)
 
-| Block     | Description                                  |
-|-----------|----------------------------------------------|
-| `links`   | Configurable button list with custom colours |
-| `text`    | Rich paragraph / heading block               |
-| `image`   | Image with alt text and caption              |
-| `video`   | YouTube, TikTok, Twitch, Instagram embed     |
-| `social`  | Social network icon links                    |
-| `music`   | Spotify, Bandcamp, SoundCloud embed          |
+| Block    | Description                                  |
+| -------- | -------------------------------------------- |
+| `links`  | Configurable button list with custom colours |
+| `text`   | Rich paragraph / heading block               |
+| `image`  | Image with alt text and caption              |
+| `video`  | YouTube, TikTok, Twitch, Instagram embed     |
+| `social` | Social network icon links                    |
+| `music`  | Spotify, Bandcamp, SoundCloud embed          |
 
 ---
 
 ## Tech stack
 
-| Layer       | Technology                              |
-|-------------|-----------------------------------------|
-| Backend     | Laravel 11, PHP 8.2+                    |
-| Frontend    | Vue 3 (Composition API), Inertia.js     |
-| Styling     | Tailwind CSS v3                         |
-| Database    | MySQL 8                                 |
-| Auth        | Laravel Breeze (Inertia stack)          |
-| Storage     | Laravel local disk (`public`)           |
-| Cache       | File cache (swap driver for Redis)      |
-| BE tests    | Pest PHP                                |
-| FE tests    | Vitest + Vue Test Utils                 |
+| Layer    | Technology                          |
+| -------- | ----------------------------------- |
+| Backend  | Laravel 11, PHP 8.2+                |
+| Frontend | Vue 3 (Composition API), Inertia.js |
+| Styling  | Tailwind CSS v3                     |
+| Database | MySQL 8                             |
+| Auth     | Laravel Breeze (Inertia stack)      |
+| Storage  | Laravel local disk (`public`)       |
+| Cache    | File cache (swap driver for Redis)  |
+| BE tests | Pest PHP                            |
+| FE tests | Vitest + Vue Test Utils             |
 
 ---
 
@@ -96,13 +97,13 @@ Minimum tools to run the project locally:
 
 ## Prerequisites
 
-| Tool       | Minimum version | Check                    |
-|------------|-----------------|--------------------------|
-| PHP        | 8.2             | `php --version`          |
-| Composer   | 2.x             | `composer --version`     |
-| Node.js    | 18.x            | `node --version`         |
-| npm        | 9.x             | `npm --version`          |
-| MySQL      | 8.0             | `mysql --version`        |
+| Tool     | Minimum version | Check                |
+| -------- | --------------- | -------------------- |
+| PHP      | 8.2             | `php --version`      |
+| Composer | 2.x             | `composer --version` |
+| Node.js  | 18.x            | `node --version`     |
+| npm      | 9.x             | `npm --version`      |
+| MySQL    | 8.0             | `mysql --version`    |
 
 > **Tip:** SQLite works fine for local dev. Set `DB_CONNECTION=sqlite` in `.env`
 > and skip MySQL entirely.
@@ -197,6 +198,7 @@ DB_PASSWORD=
 ```
 
 Notes:
+
 - `FILESYSTEM_DISK=public` already matches the avatar upload flow.
 - If you use SQLite, you do not need MySQL for local development.
 - Opcional: `SEO_DEFAULT_DESCRIPTION` en `.env` (ver `config/seo.php`) para la meta description por defecto.
@@ -347,40 +349,6 @@ Types: feat | fix | refactor | test | docs | chore | style | perf
 
 ---
 
-## Recording walkthrough (recommended order)
-
-Use this flow for demos, technical reviews, or handoff recordings:
-
-1. **Intro + structure (2 min)**  
-   Explain stack, monolithic architecture, and high-level folders (`app`, `resources/js`, `resources/views`, `routes`, `database`, `tests`).
-2. **Routes (1.5 min)**  
-   Show `routes/web.php`, `routes/api.php`, and `routes/auth.php` to map public page, dashboard, draft preview, and API endpoints.
-3. **Models + migrations (2 min)**  
-   Cover `User`, `Site`, `Block`, plus migrations (`sites`, `blocks`, snapshot column) and relation model.
-4. **Controllers (3 min)**  
-   Focus on `Api\BlockController`, `Api\SitePublishController`, `DashboardController`, and `PublicPageController`.
-5. **Policies (1 min)**  
-   Show `BlockPolicy` ownership checks and where `authorize()` is enforced in controllers.
-6. **Dashboard Vue (2 min)**  
-   Explain `resources/js/Pages/Dashboard/Index.vue`, composables (`useBlocks`, `usePublish`), and editor components.
-7. **Public page + controller (2.5 min)**  
-   Show `PublicPageController` + `resources/views/public/site.blade.php` + block partials.
-8. **Summary (0.5 min)**  
-   Close with publish workflow, snapshot strategy, and test coverage.
-
-### Next steps (to mention in the script)
-
-- Restrict `/draft/@slug` access to the site owner and explicitly authorized collaborators.
-- Improve block system UX (better field validation, richer block presets, and clearer reorder affordances).
-- Add end-to-end coverage for critical flows (register → edit blocks → publish → public page assertions).
-- Implement contact flow (mail + query handling) for public pages.
-- Introduce collaborator roles/permissions for safe shared editing.
-- Add audit trail for publish/reset/reorder actions (who changed what and when).
-- Add optional caching layer for public pages with explicit cache invalidation rules.
-- Add production observability basics (error tracking, structured logs, and health checks).
-
----
-
 ## Block system
 
 Every block type is defined in `config/blocks.php` as a PHP array:
@@ -402,6 +370,7 @@ The Vue editor fetches schemas once on load and renders `FieldRenderer.vue` inpu
 dynamically — **no block-specific code lives in the frontend**.
 
 Adding a new block type requires:
+
 1. Adding an entry to `config/blocks.php`
 2. Creating a Blade partial at `resources/views/public/blocks/_<type>.blade.php` (la vista incluye el partial con `['block' => $block]`; usa `$block->props`, etc.)
 3. Creating a Vue renderer at `resources/js/Components/Blocks/Block<Type>.vue` (vista previa / catálogo en el editor)
@@ -450,11 +419,15 @@ Each partial receives the full **`$block`** model (p. ej. `$block->props`, `$blo
 
 ## To Do
 
-- [ ] Agregar tests E2E para drag and drop en bloques.
-- [ ] Mejorar accesibilidad de iconos en acciones del editor (tooltips + focus states).
-- [ ] Añadir validación visual en vivo para `slug` disponible en registro.
-- [ ] Actualizar `AGENT.md` con la invalidación de `public_site:{slug}` al publicar/perfil (resumen en este README).
-- [ ] Crear guía corta de despliegue en producción.
+- [ ] Restringir `/draft/@slug` al dueño del sitio y a colaboradores autorizados.
+- [ ] Mejorar UX del sistema de bloques (validaciones, presets y feedback al reordenar).
+- [ ] Agregar pruebas E2E del flujo crítico (registro -> edición -> publicación -> validación pública).
+- [ ] Implementar flujo de contacto público (mail + gestión de consultas).
+- [ ] Incorporar roles/permisos para edición colaborativa segura.
+- [ ] Añadir auditoría de acciones (publicar, restaurar, reordenar, borrar) con usuario y timestamp.
+- [ ] Habilitar almacenamiento de archivos en cloud externo (por ejemplo S3/R2).
+- [ ] Migrar la base de datos a servidor cloud externo con backups automáticos y monitoreo.
+- [ ] Fortalecer observabilidad para producción (tracking de errores, logs estructurados, health checks).
 
 ## License
 
