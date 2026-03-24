@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import FieldRenderer from '../../Components/Editor/FieldRenderer.vue'
 
 const cases = [
@@ -15,6 +15,10 @@ const cases = [
 ]
 
 describe('FieldRenderer', () => {
+    afterEach(() => {
+        vi.useRealTimers()
+    })
+
     cases.forEach(({ type, selector, field }) => {
         it(`renders ${selector} for type "${type}"`, () => {
             const f = field ?? { key: 'x', type, label: 'X' }
@@ -26,10 +30,12 @@ describe('FieldRenderer', () => {
     })
 
     it('emits update:modelValue on input', async () => {
+        vi.useFakeTimers()
         const wrapper = mount(FieldRenderer, {
             props: { field: { key: 'x', type: 'text', label: 'X' }, modelValue: '' },
         })
         await wrapper.find('input').setValue('hello')
+        await vi.advanceTimersByTimeAsync(500)
         expect(wrapper.emitted('update:modelValue')[0][0]).toBe('hello')
     })
 

@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onBeforeUnmount } from 'vue'
 
 const props = defineProps({
     field: { type: Object, required: true },
@@ -16,11 +16,33 @@ const textLikeClass = `${controlClass} min-h-11 sm:h-10`
 const textareaClass = `${controlClass} min-h-28 resize-y sm:min-h-24`
 const colorClass =
     'mt-1 h-11 w-full max-w-full min-w-0 touch-manipulation cursor-pointer rounded-md border border-gray-300 bg-white px-1 py-1 sm:h-10'
+const TEXT_INPUT_DEBOUNCE_MS = 500
+const textInputTimers = new Map()
 
 const repeaterRows = computed(() => (Array.isArray(props.modelValue) ? props.modelValue : []))
 
 function onInput(e) {
     emit('update:modelValue', e.target.value)
+}
+
+function clearInputTimer(key) {
+    const t = textInputTimers.get(key)
+    if (t == null) return
+    clearTimeout(t)
+    textInputTimers.delete(key)
+}
+
+function emitTextValueDebounced(key, value) {
+    clearInputTimer(key)
+    const timer = setTimeout(() => {
+        emit('update:modelValue', value)
+        textInputTimers.delete(key)
+    }, TEXT_INPUT_DEBOUNCE_MS)
+    textInputTimers.set(key, timer)
+}
+
+function onTextInput(e) {
+    emitTextValueDebounced(`root:${props.field.key}`, e.target.value)
 }
 
 function emptyRowFromSubfields() {
@@ -51,10 +73,30 @@ function updateSubfield(rowIndex, subKey, value) {
     emitRows(next)
 }
 
+function updateSubfieldTextDebounced(rowIndex, subKey, value) {
+    const key = `rep:${props.field.key}:${rowIndex}:${subKey}`
+    clearInputTimer(key)
+    const timer = setTimeout(() => {
+        const next = repeaterRows.value.map((row, i) =>
+            i === rowIndex ? { ...row, [subKey]: value } : { ...row },
+        )
+        emitRows(next)
+        textInputTimers.delete(key)
+    }, TEXT_INPUT_DEBOUNCE_MS)
+    textInputTimers.set(key, timer)
+}
+
 function shouldShowSubfield(row, sub) {
     if (sub.key !== 'custom_network') return true
     return row?.network === 'otra'
 }
+
+onBeforeUnmount(() => {
+    for (const timer of textInputTimers.values()) {
+        clearTimeout(timer)
+    }
+    textInputTimers.clear()
+})
 </script>
 
 <template>
@@ -80,7 +122,7 @@ function shouldShowSubfield(row, sub) {
                         :name="`${field.key}.${rowIndex}.${sub.key}`"
                         :value="row[sub.key] ?? ''"
                         :disabled="disabled"
-                        @input="updateSubfield(rowIndex, sub.key, $event.target.value)"
+                        @input="updateSubfieldTextDebounced(rowIndex, sub.key, $event.target.value)"
                     />
                     <select
                         v-else-if="sub.type === 'select'"
@@ -98,7 +140,7 @@ function shouldShowSubfield(row, sub) {
                         :class="textareaClass"
                         :value="row[sub.key] ?? ''"
                         :disabled="disabled"
-                        @input="updateSubfield(rowIndex, sub.key, $event.target.value)"
+                        @input="updateSubfieldTextDebounced(rowIndex, sub.key, $event.target.value)"
                     />
                     <input
                         v-else
@@ -106,7 +148,7 @@ function shouldShowSubfield(row, sub) {
                         :class="textLikeClass"
                         :value="row[sub.key] ?? ''"
                         :disabled="disabled"
-                        @input="updateSubfield(rowIndex, sub.key, $event.target.value)"
+                        @input="updateSubfieldTextDebounced(rowIndex, sub.key, $event.target.value)"
                     />
                 </div>
                 </template>
@@ -140,7 +182,7 @@ function shouldShowSubfield(row, sub) {
             :name="field.key"
             :value="modelValue ?? ''"
             :disabled="disabled"
-            @input="onInput"
+            @input="onTextInput"
         />
         <textarea
             v-else-if="field.type === 'textarea'"
@@ -148,7 +190,7 @@ function shouldShowSubfield(row, sub) {
             :name="field.key"
             :value="modelValue ?? ''"
             :disabled="disabled"
-            @input="onInput"
+            @input="onTextInput"
         />
         <input
             v-else-if="field.type === 'url'"
@@ -159,7 +201,7 @@ function shouldShowSubfield(row, sub) {
             :name="field.key"
             :value="modelValue ?? ''"
             :disabled="disabled"
-            @input="onInput"
+            @input="onTextInput"
         />
         <input
             v-else-if="field.type === 'color'"
