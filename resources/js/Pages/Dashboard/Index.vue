@@ -14,7 +14,7 @@ import {
     toSnapshotJsonString,
 } from '@/utils/publishedBaseline'
 import { Head, Link } from '@inertiajs/vue3'
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 
 const props = defineProps({
     site: { type: Object, required: true },
@@ -152,6 +152,8 @@ const isAlignedWithPublishedSnapshot = computed(
 )
 /** Solo tiene sentido restaurar si hay borradores o el editor difiere de la línea base publicada. */
 const canPruneToPublished = computed(() => !isAlignedWithPublishedSnapshot.value)
+const propsSaveTimers = new Map()
+const PROPS_SAVE_DEBOUNCE_MS = 500
 
 async function handleAddType(type) {
     if (editorBusy.value) return
@@ -187,11 +189,49 @@ async function handleDuplicate(id) {
     markDirty()
 }
 
-async function handleUpdateProps(id, newProps) {
-    if (editorBusy.value) return
-    await updateBlock(id, newProps)
-    markDirty()
+function upsertLocalBlockProps(id, newProps) {
+    const idx = blocks.value.findIndex((b) => Number(b.id) === Number(id))
+    if (idx === -1) return
+    blocks.value[idx] = {
+        ...blocks.value[idx],
+        props: { ...(newProps || {}) },
+    }
 }
+
+function clearPropsSaveTimer(id) {
+    const current = propsSaveTimers.get(id)
+    if (current == null) return
+    clearTimeout(current)
+    propsSaveTimers.delete(id)
+}
+
+function schedulePropsSave(id, newProps) {
+    clearPropsSaveTimer(id)
+    const timer = setTimeout(async () => {
+        try {
+            await updateBlock(id, newProps)
+        } catch (error) {
+            resetError.value = error?.message || 'No se pudo guardar el bloque.'
+        } finally {
+            propsSaveTimers.delete(id)
+        }
+    }, PROPS_SAVE_DEBOUNCE_MS)
+    propsSaveTimers.set(id, timer)
+}
+
+function handleUpdateProps(id, newProps) {
+    if (editorBusy.value) return
+    upsertLocalBlockProps(id, newProps)
+    markDirty()
+    schedulePropsSave(id, newProps)
+}
+
+onBeforeUnmount(() => {
+    for (const timer of propsSaveTimers.values()) {
+        clearTimeout(timer)
+    }
+    propsSaveTimers.clear()
+})
 
 async function handlePublish() {
     if (!canPublish.value || editorBusy.value) return
