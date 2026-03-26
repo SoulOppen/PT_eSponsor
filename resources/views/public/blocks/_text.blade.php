@@ -1,4 +1,5 @@
 @php($p = $block->props ?? [])
 @if(! empty($p['content']))
-    <p @if(! empty($p['align'])) style="text-align: {{ $p['align'] }}" @endif>{{ $p['content'] }}</p>
+    @php($align = in_array(($p['align'] ?? ''), ['left', 'center', 'right'], true) ? $p['align'] : 'left')
+    <p class="block-text block-text--{{ $align }}">{{ $p['content'] }}</p>
 @endif

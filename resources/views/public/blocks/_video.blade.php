@@ -9,11 +9,11 @@
     $isTikTok = $url !== '' && str_contains($url, 'tiktok.com');
 @endphp
 @if($url !== '')
-    <div class="block-video" style="margin: 1rem 0;">
+    <div class="block-video">
         @if($isTikTok)
-            <iframe src="{{ $url }}" title="Video" width="560" height="480" style="border:0;max-width:100%"></iframe>
+            <iframe src="{{ $url }}" title="Video" width="560" height="480"></iframe>
         @else
-            <iframe src="{{ $embed }}" title="Video" width="560" height="480" style="border:0;max-width:100%"
+            <iframe src="{{ $embed }}" title="Video" width="560" height="480"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture"></iframe>
         @endif
     </div>

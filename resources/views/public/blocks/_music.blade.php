@@ -14,7 +14,7 @@
     }
 @endphp
 @if($url !== '')
-    <div class="block-music" style="margin: 1rem 0;">
-        <iframe src="{{ $iframeSrc }}" width="100%" height="380" style="border:0;max-width:100%" allow="encrypted-media"></iframe>
+    <div class="block-music">
+        <iframe src="{{ $iframeSrc }}" width="100%" height="380" allow="encrypted-media"></iframe>
     </div>
 @endif

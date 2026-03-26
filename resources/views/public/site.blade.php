@@ -33,67 +33,7 @@
     @if($avatarUrl)
         <meta property="og:image" content="{{ $avatarUrl }}">
     @endif
-    <style>
-        body { font-family: system-ui, -apple-system, Segoe UI, sans-serif; margin: 0; line-height: 1.5; color: #111; }
-        main { margin: 0 auto; padding: 1.25rem; max-width: 40rem; }
-        img { max-width: 100%; height: auto; display: block; }
-        iframe { max-width: 100%; border: 0; }
-        @if($isDraftPreview && $canEditDraft)
-        #draft-edit-toolbar.draft-toolbar-unified {
-            display: flex; flex-direction: column; gap: 0.5rem;
-            padding: 0.75rem 1.25rem;
-            background: linear-gradient(135deg, #fffbeb 0%, #eef2ff 50%, #e0e7ff 100%);
-            color: #312e81;
-            border-bottom: 1px solid #c7d2fe;
-            font-size: 0.9rem;
-        }
-        #draft-edit-toolbar .draft-toolbar-unified__row {
-            display: flex; flex-wrap: wrap; align-items: center; gap: 0.65rem 1rem;
-        }
-        #draft-edit-toolbar .draft-toolbar-unified__preview {
-            flex: 1 1 14rem;
-            color: #78350f;
-            line-height: 1.4;
-        }
-        #draft-edit-toolbar .draft-toolbar-unified__preview strong { color: #92400e; }
-        #draft-edit-toolbar .draft-toolbar-unified__muted { color: #a16207; font-size: 0.85rem; }
-        #draft-edit-toolbar .draft-toolbar-unified__public-link {
-            color: #b45309; font-weight: 600; margin-left: 0.35rem; white-space: nowrap;
-        }
-        #draft-edit-toolbar .draft-toolbar-unified__actions {
-            display: flex; flex-wrap: wrap; align-items: center; gap: 0.65rem 0.75rem;
-        }
-        #draft-edit-toolbar .draft-toolbar-unified__drag-hint {
-            margin: 0; font-size: 0.8rem; color: #4b5563; padding-top: 0.15rem;
-            border-top: 1px dashed #c7d2fe;
-        }
-        #draft-edit-toolbar button {
-            cursor: pointer; border: 0; border-radius: 0.375rem; padding: 0.5rem 1rem;
-            font-weight: 600; font-size: 0.875rem; background: #4f46e5; color: #fff;
-        }
-        #draft-edit-toolbar button:disabled { opacity: 0.6; cursor: not-allowed; }
-        #draft-edit-toolbar a.editor-link { color: #4338ca; font-weight: 500; text-decoration: underline; }
-        .draft-block-wrap {
-            display: flex; gap: 0.5rem; align-items: flex-start;
-            margin-bottom: 1.5rem; border-radius: 0.375rem; transition: box-shadow 0.15s;
-        }
-        .draft-block-wrap__handle {
-            flex-shrink: 0; width: 2.25rem; min-height: 2.25rem;
-            display: flex; align-items: center; justify-content: center;
-            margin-top: 0.15rem;
-            cursor: grab; color: #6366f1; background: #eef2ff;
-            border: 1px solid #c7d2fe; border-radius: 0.375rem;
-            touch-action: none;
-        }
-        .draft-block-wrap__handle:active { cursor: grabbing; }
-        .draft-block-wrap__handle svg { display: block; pointer-events: none; }
-        .draft-block-wrap__content {
-            flex: 1; min-width: 0;
-        }
-        .draft-block-wrap.draft-block--dragging { opacity: 0.65; }
-        .draft-block-wrap.draft-block--over { box-shadow: 0 0 0 2px #6366f1; }
-        @endif
-    </style>
+    @vite(['resources/css/app.css'])
     @if($isDraftPreview && $canEditDraft)
         @vite(['resources/js/draft-preview.js'])
     @endif
@@ -121,7 +61,7 @@
                     @if(! $canPublishDraft) disabled title="Nada pendiente: coincide con la última publicación (orden y contenido de bloques activos)." @endif
                 >Publicar</button>
                 <a class="editor-link" href="{{ route('dashboard') }}" title="Editor de tu página">Ir a tu editor</a>
-                <span id="draft-edit-message" style="flex: 1; min-width: 8rem;" aria-live="polite"></span>
+                <span id="draft-edit-message" class="draft-toolbar-unified__message" aria-live="polite"></span>
             </div>
         </div>
         <p class="draft-toolbar-unified__drag-hint">
@@ -129,33 +69,26 @@
         </p>
     </div>
 @elseif($isDraftPreview)
-    <div
-        role="status"
-        style="background: #fef3c7; color: #92400e; padding: 0.65rem 1.25rem; font-size: 0.9rem; border-bottom: 1px solid #fcd34d;"
-    >
+    <div role="status" class="draft-banner">
         <strong>Vista previa (borrador)</strong>
         — Solo usuarios conectados. Incluye bloques activos aún no publicados.
-        <a href="{{ url('/@'.$site->slug) }}" style="color: #b45309; margin-left: 0.5rem;">Ver página pública ↗</a>
-        <a
-            href="{{ route('dashboard') }}"
-            style="display: inline-flex; align-items: center; margin-left: 0.5rem; color: #4338ca; font-weight: 600; text-decoration: underline;"
-            title="Editor de tu página"
-        >Ir a tu editor</a>
+        <a href="{{ url('/@'.$site->slug) }}" class="draft-banner__public-link">Ver página pública ↗</a>
+        <a href="{{ route('dashboard') }}" class="draft-banner__editor-link" title="Editor de tu página">Ir a tu editor</a>
     </div>
 @endif
 <main>
-    <header style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem;">
+    <header class="site-header">
         @if($avatarUrl)
             <img
                 src="{{ $avatarUrl }}"
                 alt="Avatar de {{ $site->name }}"
-                style="width: 5.5rem; height: 5.5rem; border-radius: 9999px; object-fit: cover; flex-shrink: 0;"
+                class="site-avatar"
             >
         @endif
         <div>
-            <h1 style="margin: 0 0 0.5rem; font-size: 1.75rem;">{{ $site->name }}</h1>
+            <h1 class="site-title">{{ $site->name }}</h1>
             @if($site->bio)
-                <p style="margin: 0; color: #444;">{{ $site->bio }}</p>
+                <p class="site-bio">{{ $site->bio }}</p>
             @endif
         </div>
     </header>
@@ -186,7 +119,7 @@
                     </article>
                 </div>
             @else
-                <article style="margin-bottom: 1.5rem;">
+                <article class="public-block-article">
                     @include($partial, ['block' => $block])
                 </article>
             @endif
@@ -194,7 +127,7 @@
             {{-- Tipo sin plantilla Blade (p. ej. migración futura) --}}
         @endif
     @empty
-        <p style="color: #666;">
+        <p class="empty-blocks">
             @if($isDraftPreview)
                 Aún no hay bloques activos en esta vista previa.
             @else

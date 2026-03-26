@@ -8,15 +8,16 @@
 @endphp
 @if(! empty($p['title']) || count($items) > 0)
     <section
-        style="background-color: {{ $p['color'] ?? '#1e293b' }}; color: {{ $p['text_color'] ?? '#ffffff' }}; padding: 1rem; border-radius: 0.5rem; margin: 1rem 0;"
+        class="block-links"
+        style="--block-links-bg: {{ $p['color'] ?? '#1e293b' }}; --block-links-color: {{ $p['text_color'] ?? '#ffffff' }};"
     >
         @if(! empty($p['title']))
-            <h2 style="margin-top: 0;">{{ $p['title'] }}</h2>
+            <h2 class="block-links__title">{{ $p['title'] }}</h2>
         @endif
-        <nav style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+        <nav class="block-links__nav">
             @foreach($items as $item)
                 @if(! empty($item['url']))
-                    <a href="{{ $item['url'] }}" style="color: inherit;">{{ $item['label'] ?? $item['url'] }}</a>
+                    <a href="{{ $item['url'] }}" class="block-links__link">{{ $item['label'] ?? $item['url'] }}</a>
                 @endif
             @endforeach
         </nav>
