@@ -13,6 +13,11 @@ class SitePublishController extends Controller
 {
     public function store(Request $request): JsonResponse
     {
+        /*
+         * Needs: an authenticated request with a user site.
+         * Does: marks active blocks as published, rebuilds snapshot, and clears public cache.
+         * Returns: a JSON response with success flag and updated snapshot.
+         */
         $site = $request->user()->site;
         abort_if($site === null, 404);
 

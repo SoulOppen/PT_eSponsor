@@ -10,23 +10,25 @@ use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
-        // The Phase 1 tests use the `Schema` facade, which expects the `db.schema`
-        // container binding. Ensure it's available for the default connection.
+        /*
+         * Needs: application container instance during service registration.
+         * Does: binds db.schema singleton using default connection schema builder.
+         * Returns: void.
+         */
         $this->app->singleton('db.schema', function ($app) {
             return $app['db']->connection()->getSchemaBuilder();
         });
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
+        /*
+         * Needs: boot phase with Vite and Gate facades available.
+         * Does: enables Vite prefetching and registers Block policy mapping.
+         * Returns: void.
+         */
         Vite::prefetch(concurrency: 3);
 
         Gate::policy(Block::class, BlockPolicy::class);

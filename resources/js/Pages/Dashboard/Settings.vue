@@ -11,7 +11,7 @@ const props = defineProps({
     },
 })
 
-/** Evita falsos "cambios pendientes" por mezcla string/número/null al serializar desde Laravel/Inertia. */
+/** Normalize nullable values to text for stable dirty checks. */
 function asText(value) {
     if (value === null || value === undefined) return ''
     return String(value)
@@ -51,7 +51,6 @@ const avatarPreviewUrl = computed(() => {
     if (String(raw).startsWith('/')) {
         return String(raw)
     }
-    // Backward compatibility when DB has relative storage paths.
     if (String(raw).startsWith('avatars/')) {
         return `/storage/${raw}`
     }
@@ -72,7 +71,6 @@ const savedBio = computed(() => asText(props.site?.bio))
 const nameDirty = computed(() => asText(form.name) !== savedName.value)
 const slugDirty = computed(() => asText(form.slug) !== savedSlug.value)
 const bioDirty = computed(() => asText(form.bio) !== savedBio.value)
-/** Cambios pendientes respecto al avatar guardado (archivo nuevo o borrado pendiente). */
 const avatarDirty = computed(
     () => !!avatarFile.value || (!!avatarPreviewUrl.value && removeAvatar.value),
 )
@@ -81,7 +79,6 @@ const hasPendingChanges = computed(
     () => nameDirty.value || slugDirty.value || bioDirty.value || avatarDirty.value,
 )
 
-/** Puede borrar: avatar en servidor (sin borrado pendiente) o archivo nuevo elegido. */
 const canRemoveAvatar = computed(
     () => (!!avatarPreviewUrl.value && !removeAvatar.value) || !!avatarFile.value,
 )
@@ -154,7 +151,6 @@ function onRemoveAvatar() {
     if (avatarInput.value) {
         avatarInput.value.value = ''
     }
-    // Solo marcar borrado en servidor si había avatar guardado (evita salto de UI sin “Deshacer”).
     removeAvatar.value = !!avatarPreviewUrl.value
 }
 

@@ -35,7 +35,7 @@
     @endif
     @vite(['resources/css/app.css'])
     @if($isDraftPreview && $canEditDraft)
-        @vite(['resources/js/draft-preview.js'])
+        @vite(['resources/js/draft-preview.ts'])
     @endif
 </head>
 <body>

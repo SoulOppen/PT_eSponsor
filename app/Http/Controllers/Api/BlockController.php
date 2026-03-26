@@ -17,6 +17,11 @@ class BlockController extends Controller
 {
     public function index(Request $request, BlockSchemaRegistry $registry): JsonResponse
     {
+        /*
+         * Needs: an authenticated request with an associated site.
+         * Does: fetches all site blocks sorted by order and id.
+         * Returns: a JSON response with serialized block data.
+         */
         $site = $this->userSite($request);
         $blocks = $site->blocks()->orderBy('order')->orderBy('id')->get();
 
@@ -27,6 +32,11 @@ class BlockController extends Controller
 
     public function store(Request $request, BlockSchemaRegistry $registry): JsonResponse
     {
+        /*
+         * Needs: a valid block type from the registry and props as an array.
+         * Does: validates payload, computes next order, and creates a draft block.
+         * Returns: a JSON response with the created block and HTTP 201.
+         */
         $site = $this->userSite($request);
 
         $validated = $request->validate([
@@ -52,6 +62,11 @@ class BlockController extends Controller
 
     public function update(Request $request, Block $block, BlockSchemaRegistry $registry): JsonResponse
     {
+        /*
+         * Needs: update authorization for the block and valid props input.
+         * Does: validates props against block schema and updates the block.
+         * Returns: a JSON response with the updated block.
+         */
         $this->authorize('update', $block);
 
         $validated = $request->validate([
@@ -67,18 +82,24 @@ class BlockController extends Controller
 
     public function destroy(Request $request, Block $block): Response
     {
+        /*
+         * Needs: delete authorization for the target block.
+         * Does: deletes the specified block.
+         * Returns: an empty HTTP 204 response.
+         */
         $this->authorize('delete', $block);
         $block->delete();
 
         return response()->noContent();
     }
 
-    /**
-     * Elimina todos los bloques del sitio del usuario.
-     * Conserva `published_blocks_snapshot` para permitir «volver a lo publicado».
-     */
     public function destroyAll(Request $request): JsonResponse
     {
+        /*
+         * Needs: an authenticated request with an associated site.
+         * Does: deletes all site blocks and preserves/updates published baseline snapshot.
+         * Returns: a JSON response with success flag and resulting published snapshot.
+         */
         $site = $this->userSite($request);
         $site->refresh();
         $baselineSnapshot = $site->published_blocks_snapshot;
@@ -97,12 +118,13 @@ class BlockController extends Controller
         ]);
     }
 
-    /**
-     * «Volver a lo publicado»: alinea cantidad, orden y props con el último snapshot guardado
-     * (ids permitidos + order + p). Sin snapshot en BD, solo quita borradores (is_published = false).
-     */
     public function destroyUnpublished(Request $request): JsonResponse
     {
+        /*
+         * Needs: an authenticated request and optional baseline snapshot.
+         * Does: removes unpublished changes and restores the last published state.
+         * Returns: a JSON response with success flag and synchronized snapshot.
+         */
         $site = $this->userSite($request);
         $site->refresh();
 
@@ -129,6 +151,11 @@ class BlockController extends Controller
 
     public function reorder(Request $request): JsonResponse
     {
+        /*
+         * Needs: a valid blocks[{id, order}] list owned by the current site.
+         * Does: verifies ownership and updates block order values.
+         * Returns: a JSON response with ok=true.
+         */
         $site = $this->userSite($request);
 
         $validated = $request->validate([
@@ -137,18 +164,12 @@ class BlockController extends Controller
             'blocks.*.order' => ['required', 'integer'],
         ]);
 
-        foreach ($validated['blocks'] as $row) {
-            $block = Block::query()->find($row['id']);
-            if (! $block || (int) $block->site_id !== (int) $site->id) {
-                abort(403);
-            }
-        }
+        $blocksById = $this->loadReorderBlocksById($site, $validated['blocks']);
 
         foreach ($validated['blocks'] as $row) {
-            $block = Block::query()->find($row['id']);
-            if ($block !== null) {
-                $block->update(['order' => $row['order']]);
-            }
+            $block = $blocksById[(int) $row['id']] ?? null;
+            if ($block === null) continue;
+            $block->update(['order' => $row['order']]);
         }
 
         return response()->json(['ok' => true]);
@@ -156,6 +177,11 @@ class BlockController extends Controller
 
     public function duplicate(Request $request, Block $block): JsonResponse
     {
+        /*
+         * Needs: update authorization for the block and authenticated site context.
+         * Does: clones the block, appends it to the end, and marks it as unpublished.
+         * Returns: a JSON response with the cloned block and HTTP 201.
+         */
         $this->authorize('update', $block);
         $site = $this->userSite($request);
 
@@ -172,6 +198,11 @@ class BlockController extends Controller
 
     public function toggle(Request $request, Block $block): JsonResponse
     {
+        /*
+         * Needs: update authorization for the target block.
+         * Does: toggles block visibility by flipping is_active.
+         * Returns: a JSON response with the updated block.
+         */
         $this->authorize('update', $block);
 
         $block->update(['is_active' => ! $block->is_active]);
@@ -179,11 +210,13 @@ class BlockController extends Controller
         return response()->json(['data' => $this->blockPayload($block->fresh())]);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     private function blockPayload(Block $block): array
     {
+        /*
+         * Needs: a Block model instance.
+         * Does: maps model fields into API payload format.
+         * Returns: an array with public block fields.
+         */
         return [
             'id' => $block->id,
             'type' => $block->type,
@@ -196,18 +229,49 @@ class BlockController extends Controller
 
     private function userSite(Request $request): Site
     {
+        /*
+         * Needs: an authenticated user in the request.
+         * Does: resolves the user's site or aborts with 404.
+         * Returns: the Site instance linked to the current user.
+         */
         $site = $request->user()->site;
         abort_if($site === null, 404);
 
         return $site;
     }
 
-    /**
-     * @param  array<string, mixed>  $sub
-     * @return array<int, mixed>
-     */
+    private function loadReorderBlocksById(Site $site, array $rows): array
+    {
+        /*
+         * Needs: current site and rows containing id/order pairs.
+         * Does: loads blocks by id and ensures each belongs to the site.
+         * Returns: an [id => Block] map used for reordering.
+         */
+        $ids = array_map(fn (array $row): int => (int) $row['id'], $rows);
+        $blocks = Block::query()
+            ->whereIn('id', $ids)
+            ->get()
+            ->keyBy('id');
+
+        foreach ($ids as $id) {
+            $block = $blocks->get($id);
+            if (! $block || (int) $block->site_id !== (int) $site->id) {
+                abort(403);
+            }
+        }
+
+        $map = $blocks->all();
+
+        return $map;
+    }
+
     private function validationRulesForSubfield(array $sub, bool $repeaterRequired): array
     {
+        /*
+         * Needs: subfield definition and repeater-required flag.
+         * Does: builds validation rules based on subfield type.
+         * Returns: an array of Laravel validation rules.
+         */
         $subRequired = $repeaterRequired;
 
         return match ($sub['type'] ?? 'text') {
@@ -226,11 +290,13 @@ class BlockController extends Controller
         };
     }
 
-    /**
-     * @param  array<string, mixed>  $props
-     */
     private function validatePropsForType(BlockSchemaRegistry $registry, string $type, array $props): void
     {
+        /*
+         * Needs: schema registry, block type, and incoming props data.
+         * Does: builds dynamic schema rules and validates props.
+         * Returns: void; throws validation errors when data is invalid.
+         */
         $schema = $registry->get($type);
         $rules = [];
 

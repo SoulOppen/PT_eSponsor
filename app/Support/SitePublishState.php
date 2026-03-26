@@ -5,17 +5,15 @@ namespace App\Support;
 use App\Models\Block;
 use App\Models\Site;
 
-/**
- * Estado publicable del sitio: comparación estructural de bloques activos (orden, props, is_published).
- * No usa updated_at (rompe “volver a lo publicado” y otras rutas).
- */
 final class SitePublishState
 {
-    /**
-     * JSON canónico de bloques activos, ordenados por `order` e `id`.
-     */
     public static function snapshot(Site $site): string
     {
+        /*
+         * Needs: a Site instance with related blocks.
+         * Does: builds canonical JSON snapshot for active blocks ordered by order/id.
+         * Returns: snapshot JSON string.
+         */
         $rows = $site->blocks()
             ->where('is_active', true)
             ->orderBy('order')
@@ -35,6 +33,11 @@ final class SitePublishState
 
     public static function hasPendingChanges(Site $site): bool
     {
+        /*
+         * Needs: a Site instance with current and stored publish state.
+         * Does: checks unpublished active blocks and compares current snapshot hash.
+         * Returns: true when pending publish changes exist; otherwise false.
+         */
         $hasUnpublished = $site->blocks()
             ->where('is_active', true)
             ->where('is_published', false)
@@ -53,13 +56,13 @@ final class SitePublishState
         return ! hash_equals($stored, self::snapshot($site));
     }
 
-    /**
-     * Deja solo los bloques cuyo id aparece en el snapshot de última publicación (cantidad + identidad).
-     * Snapshot null/vacío en columna: solo elimina borradores (is_published = false).
-     * JSON "[]": última publicación sin bloques → vacía el sitio.
-     */
     public static function pruneSiteBlocksToBaseline(Site $site, ?string $baselineSnapshot): void
     {
+        /*
+         * Needs: a Site instance and optional baseline snapshot JSON.
+         * Does: prunes blocks to published baseline, handling empty/invalid snapshot safely.
+         * Returns: void.
+         */
         if ($baselineSnapshot === null || $baselineSnapshot === '') {
             $site->blocks()->where('is_published', false)->delete();
 
@@ -67,7 +70,6 @@ final class SitePublishState
         }
 
         try {
-            /** @var list<array<string, mixed>> $rows */
             $rows = json_decode($baselineSnapshot, true, 512, JSON_THROW_ON_ERROR);
         } catch (\JsonException) {
             $site->blocks()->where('is_published', false)->delete();
@@ -99,15 +101,14 @@ final class SitePublishState
         }
     }
 
-    /**
-     * Restaura orden, props (`p`) y marca publicado según el último snapshot guardado
-     * (tras «volver a lo publicado»: mismo contenido que la última publicación, no solo la lista).
-     * Si un bloque publicado fue borrado en BD pero sigue en el snapshot, se recrea con el mismo `id`.
-     */
     public static function restorePublishedBlocksFromSnapshot(Site $site, string $snapshotJson): void
     {
+        /*
+         * Needs: a Site instance and a snapshot JSON payload.
+         * Does: restores published rows and recreates missing published blocks.
+         * Returns: void.
+         */
         try {
-            /** @var list<array<string, mixed>> $rows */
             $rows = json_decode($snapshotJson, true, 512, JSON_THROW_ON_ERROR);
         } catch (\JsonException) {
             return;
@@ -148,11 +149,13 @@ final class SitePublishState
         }
     }
 
-    /**
-     * @param array<string, mixed> $row
-     */
     private static function recreateBlockFromSnapshotRow(Site $site, array $row, int $blockId): void
     {
+        /*
+         * Needs: site, snapshot row payload, and target block id.
+         * Does: creates a published active block using snapshot values.
+         * Returns: void.
+         */
         $type = self::resolveTypeFromSnapshotRow($row);
         $props = array_key_exists('p', $row) && is_array($row['p']) ? $row['p'] : [];
 
@@ -167,11 +170,13 @@ final class SitePublishState
         $new->save();
     }
 
-    /**
-     * @param array<string, mixed> $row
-     */
     private static function resolveTypeFromSnapshotRow(array $row): string
     {
+        /*
+         * Needs: one snapshot row payload.
+         * Does: resolves safe block type and falls back to text when invalid.
+         * Returns: a valid block type string.
+         */
         $raw = $row['t'] ?? null;
         if (! is_string($raw) || $raw === '') {
             return 'text';
@@ -182,16 +187,23 @@ final class SitePublishState
         return array_key_exists($raw, $schemas) ? $raw : 'text';
     }
 
-    /**
-     * @deprecated Usar {@see restorePublishedBlocksFromSnapshot}
-     */
     public static function restorePublishedBlockOrdersFromSnapshot(Site $site, string $snapshotJson): void
     {
+        /*
+         * Needs: site and snapshot JSON payload.
+         * Does: forwards legacy call to full snapshot restore method.
+         * Returns: void.
+         */
         self::restorePublishedBlocksFromSnapshot($site, $snapshotJson);
     }
 
     private static function normalizeProps(mixed $props): mixed
     {
+        /*
+         * Needs: props value that can be scalar, list, or associative array.
+         * Does: recursively normalizes arrays to a stable key order.
+         * Returns: normalized props preserving original structure semantics.
+         */
         if (! is_array($props)) {
             return $props;
         }

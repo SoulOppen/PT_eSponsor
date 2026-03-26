@@ -12,30 +12,29 @@ use Inertia\Response;
 
 class PasswordResetLinkController extends Controller
 {
-    /**
-     * Display the password reset link request view.
-     */
     public function create(): Response
     {
+        /*
+         * Needs: no input; reads optional flash status from session.
+         * Does: renders forgot-password page with current status message.
+         * Returns: an Inertia response for Auth/ForgotPassword.
+         */
         return Inertia::render('Auth/ForgotPassword', [
             'status' => session('status'),
         ]);
     }
 
-    /**
-     * Handle an incoming password reset link request.
-     *
-     * @throws ValidationException
-     */
     public function store(Request $request): RedirectResponse
     {
+        /*
+         * Needs: a valid email field in request payload.
+         * Does: validates email and asks provider to send password reset link.
+         * Returns: back redirect with status on success; otherwise throws ValidationException.
+         */
         $request->validate([
             'email' => 'required|email',
         ]);
 
-        // We will send the password reset link to this user. Once we have attempted
-        // to send the link, we will examine the response then see the message we
-        // need to show to the user. Finally, we'll send out a proper response.
         $status = Password::sendResetLink(
             $request->only('email')
         );
