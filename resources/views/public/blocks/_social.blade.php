@@ -1,16 +1,40 @@
-@php($links = $block->props['links'] ?? [])
-@if(count($links) > 0)
+@php
+    $props = is_array($block->props ?? null) ? $block->props : [];
+    $rawLinks = $props['links'] ?? ($props['items'] ?? []);
+    if (is_string($rawLinks)) {
+        $decoded = json_decode($rawLinks, true);
+        $rawLinks = is_array($decoded) ? $decoded : [];
+    }
+    if (is_array($rawLinks)) {
+        $links = $rawLinks;
+    } elseif (is_iterable($rawLinks)) {
+        $links = iterator_to_array($rawLinks);
+    } else {
+        $links = [];
+    }
+@endphp
+@if(! empty($links))
     @php($networkLabels = ['instagram' => 'Instagram', 'tiktok' => 'TikTok', 'youtube' => 'YouTube', 'facebook' => 'Facebook', 'x' => 'X'])
     <nav class="block-social" aria-label="Redes sociales">
         @foreach($links as $item)
-            @if(! empty($item['url']))
-                @php($label = $item['label'] ?? $item['url'])
-                @if(($item['network'] ?? null) === 'otra' && ! empty($item['custom_network']))
-                    @php($label = $item['custom_network'])
-                @elseif(! empty($item['network']) && isset($networkLabels[$item['network']]))
-                    @php($label = $networkLabels[$item['network']])
+            @php($entry = is_array($item) ? $item : (is_object($item) ? (array) $item : []))
+            @if(! empty($entry['url']))
+                @php($label = $entry['label'] ?? $entry['url'])
+                @php($network = $entry['network'] ?? null)
+                @if(($entry['network'] ?? null) === 'otra' && ! empty($entry['custom_network']))
+                    @php($label = $entry['custom_network'])
+                @elseif(! empty($entry['network']) && isset($networkLabels[$entry['network']]))
+                    @php($label = $networkLabels[$entry['network']])
                 @endif
-                <a href="{{ $item['url'] }}" rel="noopener noreferrer">{{ $label }}</a>
+                <a
+                    href="{{ $entry['url'] }}"
+                    class="block-social__link"
+                    data-network="{{ is_string($network) && $network !== '' ? $network : 'other' }}"
+                    target="_blank"
+                    rel="noopener noreferrer nofollow"
+                >
+                    {{ $label }}
+                </a>
             @endif
         @endforeach
     </nav>

@@ -1,4 +1,6 @@
 <script setup>
+import { computed } from 'vue'
+
 const NETWORK_LABELS = {
     instagram: 'Instagram',
     tiktok: 'TikTok',
@@ -11,25 +13,43 @@ const { props: blockProps } = defineProps({
     props: { type: Object, required: true },
 })
 
+const socialItems = computed(() => {
+    const raw = blockProps.links ?? blockProps.items ?? []
+    if (!Array.isArray(raw)) return []
+    return raw.filter((item) => item && item.url)
+})
+
 function socialLabel(item) {
     if (item.network === 'otra' && item.custom_network) return item.custom_network
     if (item.network && NETWORK_LABELS[item.network]) return NETWORK_LABELS[item.network]
     return item.label || item.url
 }
+
+function socialNetwork(item) {
+    return item?.network && typeof item.network === 'string' ? item.network : 'other'
+}
+
+function socialHref(item) {
+    const raw = String(item?.url ?? '').trim()
+    if (!raw) return '#'
+    return raw
+}
 </script>
 
 <template>
     <nav
-        v-if="(blockProps.links || []).length"
-        class="block-social mb-3 flex flex-wrap gap-3 text-sm"
+        v-if="socialItems.length"
+        class="block-social mb-3 text-sm"
         aria-label="Redes sociales"
     >
         <a
-            v-for="(item, index) in blockProps.links || []"
+            v-for="(item, index) in socialItems"
             :key="index"
-            class="font-medium text-indigo-600 underline"
-            :href="item.url"
-            rel="noopener noreferrer"
+            class="block-social__link"
+            :data-network="socialNetwork(item)"
+            :href="socialHref(item)"
+            target="_blank"
+            rel="noopener noreferrer nofollow"
         >
             {{ socialLabel(item) }}
         </a>

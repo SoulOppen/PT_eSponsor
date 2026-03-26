@@ -17,6 +17,7 @@ const textareaClass = `${controlClass} min-h-28 resize-y sm:min-h-24`
 const colorClass =
     'mt-1 h-11 w-full max-w-full min-w-0 touch-manipulation cursor-pointer rounded-md border border-gray-300 bg-white px-1 py-1 sm:h-10'
 const TEXT_INPUT_DEBOUNCE_MS = 500
+const URL_INPUT_DEBOUNCE_MS = 300
 const textInputTimers = new Map()
 
 const repeaterRows = computed(() => (Array.isArray(props.modelValue) ? props.modelValue : []))
@@ -86,9 +87,41 @@ function updateSubfieldTextDebounced(rowIndex, subKey, value) {
     textInputTimers.set(key, timer)
 }
 
+function updateSubfieldUrlDebounced(rowIndex, subKey, value) {
+    const key = `rep-url:${props.field.key}:${rowIndex}:${subKey}`
+    clearInputTimer(key)
+    const timer = setTimeout(() => {
+        const next = repeaterRows.value.map((row, i) =>
+            i === rowIndex ? { ...row, [subKey]: value } : { ...row },
+        )
+        emitRows(next)
+        textInputTimers.delete(key)
+    }, URL_INPUT_DEBOUNCE_MS)
+    textInputTimers.set(key, timer)
+}
+
 function shouldShowSubfield(row, sub) {
     if (sub.key !== 'custom_network') return true
     return row?.network === 'otra'
+}
+
+function shouldStripProtocolForRowUrl(fieldKey, subKey) {
+    return (fieldKey === 'links' || fieldKey === 'items') && subKey === 'url'
+}
+
+function stripProtocolForEditing(value) {
+    const raw = String(value ?? '').trim()
+    return raw.replace(/^(https?:\/\/)/i, '')
+}
+
+function rowUrlDisplayValue(fieldKey, subKey, value) {
+    if (!shouldStripProtocolForRowUrl(fieldKey, subKey)) return value ?? ''
+    return stripProtocolForEditing(value)
+}
+
+function normalizeRowUrlInput(fieldKey, subKey, value) {
+    if (!shouldStripProtocolForRowUrl(fieldKey, subKey)) return value
+    return stripProtocolForEditing(value)
 }
 
 onBeforeUnmount(() => {
@@ -116,13 +149,28 @@ onBeforeUnmount(() => {
                 >
                     <label class="mb-1 block text-xs font-medium text-gray-600">{{ sub.label }}</label>
                     <input
-                        v-if="sub.type === 'text' || sub.type === 'url'"
-                        :type="sub.type === 'url' ? 'url' : 'text'"
+                        v-if="sub.type === 'text'"
+                        type="text"
                         :class="textLikeClass"
                         :name="`${field.key}.${rowIndex}.${sub.key}`"
                         :value="row[sub.key] ?? ''"
                         :disabled="disabled"
                         @input="updateSubfieldTextDebounced(rowIndex, sub.key, $event.target.value)"
+                    />
+                    <input
+                        v-else-if="sub.type === 'url'"
+                        type="url"
+                        :class="textLikeClass"
+                        :name="`${field.key}.${rowIndex}.${sub.key}`"
+                        :value="rowUrlDisplayValue(field.key, sub.key, row[sub.key])"
+                        :disabled="disabled"
+                        @input="
+                            updateSubfieldUrlDebounced(
+                                rowIndex,
+                                sub.key,
+                                normalizeRowUrlInput(field.key, sub.key, $event.target.value),
+                            )
+                        "
                     />
                     <select
                         v-else-if="sub.type === 'select'"

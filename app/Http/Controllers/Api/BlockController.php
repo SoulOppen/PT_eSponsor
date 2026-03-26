@@ -44,6 +44,7 @@ class BlockController extends Controller
             'props' => ['present', 'array'],
         ]);
 
+        $validated['props'] = $this->normalizePropsForType($validated['type'], $validated['props']);
         $this->validatePropsForType($registry, $validated['type'], $validated['props']);
 
         $nextOrder = ($site->blocks()->max('order'));
@@ -73,6 +74,7 @@ class BlockController extends Controller
             'props' => ['required', 'array'],
         ]);
 
+        $validated['props'] = $this->normalizePropsForType($block->type, $validated['props']);
         $this->validatePropsForType($registry, $block->type, $validated['props']);
 
         $block->update(['props' => $validated['props']]);
@@ -272,15 +274,15 @@ class BlockController extends Controller
          * Does: builds validation rules based on subfield type.
          * Returns: an array of Laravel validation rules.
          */
-        $subRequired = $repeaterRequired;
+        $subRequired = ! empty($sub['required']);
 
         return match ($sub['type'] ?? 'text') {
             'select' => $subRequired
                 ? ['required', Rule::in($sub['options'] ?? [])]
                 : ['sometimes', 'nullable', Rule::in($sub['options'] ?? [])],
             'url' => $subRequired
-                ? ['required', 'url']
-                : ['sometimes', 'nullable', 'url'],
+                ? ['required', 'string']
+                : ['sometimes', 'nullable', 'string'],
             'text', 'textarea' => $subRequired
                 ? ['required', 'string']
                 : ['sometimes', 'nullable', 'string'],
@@ -318,8 +320,8 @@ class BlockController extends Controller
                     break;
                 case 'url':
                     $rules[$path] = $required
-                        ? ['required', 'url']
-                        : ['sometimes', 'nullable', 'url'];
+                        ? ['required', 'string']
+                        : ['sometimes', 'nullable', 'string'];
                     break;
                 case 'color':
                     $rules[$path] = $required
@@ -348,5 +350,57 @@ class BlockController extends Controller
         }
 
         Validator::make(['props' => $props], $rules)->validate();
+    }
+
+    /**
+     * @param  array<string, mixed>  $props
+     * @return array<string, mixed>
+     */
+    private function normalizePropsForType(string $type, array $props): array
+    {
+        /*
+         * Needs: block type and raw props payload from request.
+         * Does: normalizes type-specific props to avoid invalid transient rows.
+         * Returns: sanitized props array ready for schema validation.
+         */
+        if (! in_array($type, ['social', 'links'], true)) {
+            return $props;
+        }
+
+        $listKey = $type === 'social' ? 'links' : 'items';
+        $rawLinks = $props[$listKey] ?? [];
+        if (is_string($rawLinks)) {
+            $decoded = json_decode($rawLinks, true);
+            $rawLinks = is_array($decoded) ? $decoded : [];
+        }
+
+        if (! is_iterable($rawLinks)) {
+            $props[$listKey] = [];
+            return $props;
+        }
+
+        $links = [];
+        foreach ($rawLinks as $item) {
+            $entry = is_array($item) ? $item : (is_object($item) ? (array) $item : []);
+            $url = trim((string) ($entry['url'] ?? ''));
+            $url = $url !== '' ? $url : null;
+            if ($type === 'social') {
+                $links[] = [
+                    'network' => $entry['network'] ?? null,
+                    'custom_network' => $entry['custom_network'] ?? null,
+                    'url' => $url,
+                ];
+                continue;
+            }
+
+            $links[] = [
+                'label' => $entry['label'] ?? null,
+                'url' => $url,
+            ];
+        }
+
+        $props[$listKey] = $links;
+
+        return $props;
     }
 }

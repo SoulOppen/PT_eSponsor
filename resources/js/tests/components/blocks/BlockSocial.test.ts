@@ -34,4 +34,15 @@ describe('BlockSocial', () => {
         expect(links[0].text()).toBe('Instagram')
         expect(links[1].text()).toBe('BandPage')
     })
+
+    it('normalizes url without protocol to https', () => {
+        const wrapper = mount(BlockSocial, {
+            props: {
+                props: {
+                    links: [{ network: 'x', url: 'www.x.com/user' }],
+                },
+            },
+        })
+        expect(wrapper.find('a').attributes('href')).toBe('https://www.x.com/user')
+    })
 })

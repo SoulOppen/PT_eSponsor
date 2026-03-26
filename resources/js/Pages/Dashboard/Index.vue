@@ -155,6 +155,20 @@ const canPruneToPublished = computed(() => !isAlignedWithPublishedSnapshot.value
 const propsSaveTimers = new Map()
 const PROPS_SAVE_DEBOUNCE_MS = 500
 
+function extractSocialUrls(rawProps) {
+    const list = rawProps?.links ?? rawProps?.items ?? []
+    if (!Array.isArray(list)) return []
+    return list
+        .map((row) => String(row?.url ?? '').trim())
+        .filter((url) => url.length > 0)
+}
+
+function logSavedSocialUrls(blockId, rawProps, source) {
+    const urls = extractSocialUrls(rawProps)
+    if (!urls.length) return
+    console.log(`[social:url:saved][${source}] block=${blockId}`, urls)
+}
+
 async function handleAddType(type) {
     if (editorBusy.value) return
     addBlockError.value = ''
@@ -210,6 +224,7 @@ function schedulePropsSave(id, newProps) {
     const timer = setTimeout(async () => {
         try {
             await updateBlock(id, newProps)
+            logSavedSocialUrls(id, newProps, 'debounced')
         } catch (error) {
             resetError.value = error?.message || 'No se pudo guardar el bloque.'
         } finally {
@@ -217,6 +232,24 @@ function schedulePropsSave(id, newProps) {
         }
     }, PROPS_SAVE_DEBOUNCE_MS)
     propsSaveTimers.set(id, timer)
+}
+
+async function flushPendingPropsSaves() {
+    const pendingIds = Array.from(propsSaveTimers.keys())
+    if (!pendingIds.length) return
+
+    for (const id of pendingIds) {
+        clearPropsSaveTimer(id)
+    }
+
+    await Promise.all(
+        pendingIds.map(async (id) => {
+            const block = blocks.value.find((b) => Number(b.id) === Number(id))
+            if (!block) return
+            await updateBlock(id, block.props || {})
+            logSavedSocialUrls(id, block.props || {}, 'flush-before-publish')
+        }),
+    )
 }
 
 function handleUpdateProps(id, newProps) {
@@ -238,6 +271,8 @@ async function handlePublish() {
     publishError.value = ''
     publishing.value = true
     try {
+        // Ensure debounced prop updates are persisted before publishing snapshot.
+        await flushPendingPropsSaves()
         const data = await publish()
         blocks.value = blocks.value.map((b) => (b.is_active ? { ...b, is_published: true } : b))
         if (data?.published_blocks_snapshot != null && data?.published_blocks_snapshot !== '') {
