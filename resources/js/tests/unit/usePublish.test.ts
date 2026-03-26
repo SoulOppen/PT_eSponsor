@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { usePublish } from '../../composables/usePublish.js'
+import { usePublish } from '../../composables/usePublish'
 
 global.fetch = vi.fn()
 
