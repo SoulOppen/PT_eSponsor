@@ -34,7 +34,7 @@ function defaultPropsForType(type) {
         } else if (f.type === 'repeater') {
             const row = {}
             for (const s of f.subfields || []) {
-                if (s.type === 'url') {
+                if (s.key === 'url' && (s.type === 'text' || s.type === 'url')) {
                     row[s.key] = 'https://example.com'
                 } else if (s.type === 'select' && s.options?.length) {
                     row[s.key] = s.options[0]

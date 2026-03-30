@@ -5,7 +5,13 @@ import FieldRenderer from '../../Components/Editor/FieldRenderer.vue'
 const cases = [
     { type: 'text', selector: 'input[type="text"]' },
     { type: 'textarea', selector: 'textarea' },
-    { type: 'url', selector: 'input[type="url"]' },
+    { type: 'url', selector: 'input[type="text"]' },
+    {
+        describeAs: 'text field with key url',
+        type: 'text',
+        field: { key: 'url', type: 'text', label: 'URL' },
+        selector: 'input[type="text"]',
+    },
     { type: 'color', selector: 'input[type="color"]' },
     {
         type: 'select',
@@ -19,8 +25,8 @@ describe('FieldRenderer', () => {
         vi.useRealTimers()
     })
 
-    cases.forEach(({ type, selector, field }) => {
-        it(`renders ${selector} for type "${type}"`, () => {
+    cases.forEach(({ type, selector, field, describeAs }) => {
+        it(`renders ${selector} for ${describeAs ?? `type "${type}"`}`, () => {
             const f = field ?? { key: 'x', type, label: 'X' }
             const wrapper = mount(FieldRenderer, {
                 props: { field: f, modelValue: type === 'color' ? '#000000' : '' },
@@ -49,7 +55,7 @@ describe('FieldRenderer', () => {
                     subfields: [
                         { key: 'network', type: 'select', label: 'Red', options: ['instagram', 'otra'] },
                         { key: 'custom_network', type: 'text', label: 'Nombre de la red' },
-                        { key: 'url', type: 'url', label: 'URL' },
+                        { key: 'url', type: 'text', label: 'URL' },
                     ],
                 },
                 modelValue: [{ network: 'instagram', custom_network: '', url: 'https://example.com' }],

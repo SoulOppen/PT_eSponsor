@@ -27,7 +27,7 @@ return [
                     'required' => true,
                     'subfields' => [
                         ['key' => 'label', 'type' => 'text', 'label' => 'Texto del botón'],
-                        ['key' => 'url', 'type' => 'url', 'label' => 'URL'],
+                        ['key' => 'url', 'type' => 'text', 'label' => 'URL'],
                     ],
                 ],
                 ['key' => 'color', 'type' => 'color', 'label' => 'Color fondo', 'default' => '#1e293b'],
@@ -38,7 +38,7 @@ return [
             'label' => 'Imagen',
             'icon' => 'image',
             'fields' => [
-                ['key' => 'url', 'type' => 'url', 'label' => 'URL de imagen', 'required' => true],
+                ['key' => 'url', 'type' => 'text', 'label' => 'URL de imagen', 'required' => true],
                 ['key' => 'alt', 'type' => 'text', 'label' => 'Texto alternativo'],
             ],
         ],
@@ -46,7 +46,7 @@ return [
             'label' => 'Video',
             'icon' => 'video',
             'fields' => [
-                ['key' => 'url', 'type' => 'url', 'label' => 'URL del video', 'required' => true],
+                ['key' => 'url', 'type' => 'text', 'label' => 'URL del video', 'required' => true],
             ],
         ],
         'social' => [
@@ -66,7 +66,7 @@ return [
                             'options' => ['instagram', 'tiktok', 'youtube', 'facebook', 'x', 'otra'],
                         ],
                         ['key' => 'custom_network', 'type' => 'text', 'label' => 'Nombre de la red (si eliges otra)'],
-                        ['key' => 'url', 'type' => 'url', 'label' => 'URL'],
+                        ['key' => 'url', 'type' => 'text', 'label' => 'URL'],
                     ],
                 ],
             ],
@@ -82,7 +82,7 @@ return [
                     'required' => true,
                     'options' => ['spotify', 'bandcamp', 'soundcloud'],
                 ],
-                ['key' => 'url', 'type' => 'url', 'label' => 'URL', 'required' => true],
+                ['key' => 'url', 'type' => 'text', 'label' => 'URL', 'required' => true],
             ],
         ],
     ],

@@ -17,7 +17,6 @@ const textareaClass = `${controlClass} min-h-28 resize-y sm:min-h-24`
 const colorClass =
     'mt-1 h-11 w-full max-w-full min-w-0 touch-manipulation cursor-pointer rounded-md border border-gray-300 bg-white px-1 py-1 sm:h-10'
 const TEXT_INPUT_DEBOUNCE_MS = 500
-const URL_INPUT_DEBOUNCE_MS = 300
 const textInputTimers = new Map()
 
 const repeaterRows = computed(() => (Array.isArray(props.modelValue) ? props.modelValue : []))
@@ -87,19 +86,6 @@ function updateSubfieldTextDebounced(rowIndex, subKey, value) {
     textInputTimers.set(key, timer)
 }
 
-function updateSubfieldUrlDebounced(rowIndex, subKey, value) {
-    const key = `rep-url:${props.field.key}:${rowIndex}:${subKey}`
-    clearInputTimer(key)
-    const timer = setTimeout(() => {
-        const next = repeaterRows.value.map((row, i) =>
-            i === rowIndex ? { ...row, [subKey]: value } : { ...row },
-        )
-        emitRows(next)
-        textInputTimers.delete(key)
-    }, URL_INPUT_DEBOUNCE_MS)
-    textInputTimers.set(key, timer)
-}
-
 function shouldShowSubfield(row, sub) {
     if (sub.key !== 'custom_network') return true
     return row?.network === 'otra'
@@ -122,6 +108,14 @@ function rowUrlDisplayValue(fieldKey, subKey, value) {
 function normalizeRowUrlInput(fieldKey, subKey, value) {
     if (!shouldStripProtocolForRowUrl(fieldKey, subKey)) return value
     return stripProtocolForEditing(value)
+}
+
+function repeaterUrlLikeInput(sub) {
+    return sub.type === 'text' || sub.type === 'url'
+}
+
+function repeaterTextInputValue(row, sub) {
+    return rowUrlDisplayValue(props.field.key, sub.key, row[sub.key])
 }
 
 onBeforeUnmount(() => {
@@ -149,23 +143,16 @@ onBeforeUnmount(() => {
                 >
                     <label class="mb-1 block text-xs font-medium text-gray-600">{{ sub.label }}</label>
                     <input
-                        v-if="sub.type === 'text'"
+                        v-if="repeaterUrlLikeInput(sub)"
                         type="text"
                         :class="textLikeClass"
                         :name="`${field.key}.${rowIndex}.${sub.key}`"
-                        :value="row[sub.key] ?? ''"
-                        :disabled="disabled"
-                        @input="updateSubfieldTextDebounced(rowIndex, sub.key, $event.target.value)"
-                    />
-                    <input
-                        v-else-if="sub.type === 'url'"
-                        type="url"
-                        :class="textLikeClass"
-                        :name="`${field.key}.${rowIndex}.${sub.key}`"
-                        :value="rowUrlDisplayValue(field.key, sub.key, row[sub.key])"
+                        :inputmode="sub.key === 'url' ? 'url' : undefined"
+                        :autocomplete="sub.key === 'url' ? 'url' : undefined"
+                        :value="repeaterTextInputValue(row, sub)"
                         :disabled="disabled"
                         @input="
-                            updateSubfieldUrlDebounced(
+                            updateSubfieldTextDebounced(
                                 rowIndex,
                                 sub.key,
                                 normalizeRowUrlInput(field.key, sub.key, $event.target.value),
@@ -224,10 +211,12 @@ onBeforeUnmount(() => {
         </div>
 
         <input
-            v-else-if="field.type === 'text'"
+            v-else-if="field.type === 'text' || field.type === 'url'"
             type="text"
             :class="textLikeClass"
             :name="field.key"
+            :inputmode="field.key === 'url' ? 'url' : undefined"
+            :autocomplete="field.key === 'url' ? 'url' : undefined"
             :value="modelValue ?? ''"
             :disabled="disabled"
             @input="onTextInput"
@@ -235,17 +224,6 @@ onBeforeUnmount(() => {
         <textarea
             v-else-if="field.type === 'textarea'"
             :class="textareaClass"
-            :name="field.key"
-            :value="modelValue ?? ''"
-            :disabled="disabled"
-            @input="onTextInput"
-        />
-        <input
-            v-else-if="field.type === 'url'"
-            type="url"
-            :class="textLikeClass"
-            inputmode="url"
-            autocomplete="url"
             :name="field.key"
             :value="modelValue ?? ''"
             :disabled="disabled"
