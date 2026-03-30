@@ -32,7 +32,11 @@ function socialNetwork(item) {
 function socialHref(item) {
     const raw = String(item?.url ?? '').trim()
     if (!raw) return '#'
-    return raw
+    if (/^https?:\/\//i.test(raw)) return raw
+    if (raw.startsWith('//')) return `https:${raw}`
+    if (/^[a-z][a-z0-9+.-]*:/i.test(raw)) return raw
+    if (raw.startsWith('/')) return raw
+    return `https://${raw}`
 }
 </script>
 

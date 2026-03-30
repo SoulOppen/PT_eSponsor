@@ -19,6 +19,16 @@
         @foreach($links as $item)
             @php($entry = is_array($item) ? $item : (is_object($item) ? (array) $item : []))
             @if(! empty($entry['url']))
+                @php
+                    $href = trim((string) $entry['url']);
+                    if ($href !== '' && ! preg_match('#^https?://#i', $href) && ! preg_match('#^[a-z][a-z0-9+.-]*:#i', $href)) {
+                        if (str_starts_with($href, '//')) {
+                            $href = 'https:'.$href;
+                        } elseif (! str_starts_with($href, '/')) {
+                            $href = 'https://'.$href;
+                        }
+                    }
+                @endphp
                 @php($label = $entry['label'] ?? $entry['url'])
                 @php($network = $entry['network'] ?? null)
                 @if(($entry['network'] ?? null) === 'otra' && ! empty($entry['custom_network']))
@@ -27,7 +37,7 @@
                     @php($label = $networkLabels[$entry['network']])
                 @endif
                 <a
-                    href="{{ $entry['url'] }}"
+                    href="{{ $href }}"
                     class="block-social__link"
                     data-network="{{ is_string($network) && $network !== '' ? $network : 'other' }}"
                     target="_blank"
