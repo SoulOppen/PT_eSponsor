@@ -17,6 +17,7 @@
 - [Environment variables (minimum)](#environment-variables-minimum)
 - [Running tests](#running-tests)
 - [Git workflow](#git-workflow)
+- [CI (solo develop)](#ci-solo-develop)
 - [Project structure](#project-structure)
 - [Recording walkthrough (recommended order)](#recording-walkthrough-recommended-order)
 - [Block system](#block-system)
@@ -250,6 +251,10 @@ main        ← protected; receives merges from develop only
     ├── be/phase-2
     └── fe/phase-2   ...
 ```
+
+### CI (solo develop)
+
+GitHub Actions: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) — **PHP 8.4**, `composer install`, `npm ci`, `php artisan test`, `npm run test:run`. Se dispara solo en **push a `develop`** y en **pull request hacia `develop`** (no en `main` ni en el resto de ramas).
 
 ### Commit rules
 
