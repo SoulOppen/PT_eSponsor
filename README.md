@@ -55,7 +55,7 @@ php artisan db:seed --class=DemoSeeder
 - **Public page** — Blade en `/@{slug}` sin bundle del editor; datos desde BD. Claves `public_site:{slug}` se invalidan al publicar y al guardar perfil (listas para caché futura si se añade `Cache::remember`)
 - **SEO** — pública `/@slug`: título `Nombre de la persona - Nombre de la plataforma` (`APP_NAME`), descripción = bio (o texto por defecto `config/seo.php` / `SEO_DEFAULT_DESCRIPTION`); Inertia: meta description por defecto en `app.blade.php`
 
-![Borrador, publicación y página pública `/@{slug}`](.github/readme/diagrama-borrador-publicar.svg)
+![Borrador, publicación y página pública `/@{slug}`](.github/readme/diagrama-borrador-publicar.png)
 
 ### Block catalogue (MVP)
 
@@ -144,7 +144,7 @@ php artisan serve      # → http://localhost:8000
 npm run dev            # → Vite HMR on port 5173
 ```
 
-![Desarrollo local: Laravel (`serve`) y Vite (`dev`)](.github/readme/diagrama-dev-local.svg)
+![Desarrollo local: Laravel (`serve`) y Vite (`dev`)](.github/readme/diagrama-dev-local.png)
 
 ---
 
@@ -260,7 +260,7 @@ main        ← protected; receives merges from develop only
 
 GitHub Actions: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) — **PHP 8.4**, `composer install`, `npm ci`, `vite build`, `php artisan test`, `npm run test:run`. Se dispara solo en **push a `develop`** y en **pull request hacia `develop`** (no en `main` ni en el resto de ramas).
 
-![CI en GitHub Actions (rama develop)](.github/readme/diagrama-ci.svg)
+![CI en GitHub Actions (rama develop)](.github/readme/diagrama-ci.png)
 
 ### Commit rules
 
@@ -364,7 +364,7 @@ Types: feat | fix | refactor | test | docs | chore | style | perf
 
 Every block type is defined in `config/blocks.php` as a PHP array:
 
-![Flujo del esquema de bloques: config, registry, API y render en Vue y Blade](.github/readme/diagrama-bloques.svg)
+![Flujo del esquema de bloques: config, registry, API y render en Vue y Blade](.github/readme/diagrama-bloques.png)
 
 ```php
 'text' => [
@@ -405,7 +405,7 @@ Blade view — no Inertia, no Vue bundle on the wire.
 
 Esquema de rutas y stacks (referencia; no es captura de pantalla del producto):
 
-![Rutas: editor Inertia, borrador y página pública Blade](.github/readme/diagrama-rutas.svg)
+![Rutas: editor Inertia, borrador y página pública Blade](.github/readme/diagrama-rutas.png)
 
 Each block type has a dedicated Blade partial in `resources/views/public/blocks/`.
 Each partial receives the full **`$block`** model (p. ej. `$block->props`, `$block->type`).
