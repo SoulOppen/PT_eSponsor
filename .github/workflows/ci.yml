@@ -41,6 +41,9 @@ jobs:
           cp .env.example .env
           php artisan key:generate --ansi
 
+      - name: Build frontend assets (Vite)
+        run: npm run build
+
       - name: Run PHPUnit / Pest
         run: php artisan test
 
