@@ -358,6 +358,8 @@ Types: feat | fix | refactor | test | docs | chore | style | perf
 
 Every block type is defined in `config/blocks.php` as a PHP array:
 
+![Flujo del esquema de bloques: config, registry, API y render en Vue y Blade](.github/readme/diagrama-bloques.svg)
+
 ```php
 'text' => [
     'label'  => 'Text',
@@ -394,6 +396,10 @@ Blade view — no Inertia, no Vue bundle on the wire.
 - Zero JS framework boot time → faster First Contentful Paint
 - Fully server-rendered HTML → crawlable by search engines without a JS runtime
 - Hoy cada `GET /@slug` carga el `Site` y los bloques publicados desde la **base de datos** (sin `Cache::remember` en el controlador). Existe la convención de clave `public_site:{slug}` y se hace `Cache::forget` al **publicar** y al **guardar perfil**, para cuando se quiera envolver la respuesta en caché.
+
+Esquema de rutas y stacks (referencia; no es captura de pantalla del producto):
+
+![Rutas: editor Inertia, borrador y página pública Blade](.github/readme/diagrama-rutas.svg)
 
 Each block type has a dedicated Blade partial in `resources/views/public/blocks/`.
 Each partial receives the full **`$block`** model (p. ej. `$block->props`, `$block->type`).
