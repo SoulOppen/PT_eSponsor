@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 248" role="img" aria-labelledby="tdl dldl">
+  <title id="tdl">Desarrollo local: Laravel y Vite</title>
+  <desc id="dldl">Dos procesos: php artisan serve en el puerto 8000 y npm run dev con HMR en 5173, según Quick start del README.</desc>
+  <rect width="720" height="248" fill="#f8fafc"/>
+  <text x="360" y="28" text-anchor="middle" font-family="system-ui,Segoe UI,sans-serif" font-size="15" font-weight="600" fill="#0f172a">Desarrollo local (resumen Quick start)</text>
+  <rect x="24" y="48" width="200" height="88" rx="8" fill="#fff" stroke="#64748b" stroke-width="1.5"/>
+  <text x="124" y="76" text-anchor="middle" font-family="system-ui,Segoe UI,sans-serif" font-size="12" font-weight="600" fill="#0f172a">Terminal 1</text>
+  <text x="124" y="98" text-anchor="middle" font-family="system-ui,Segoe UI,sans-serif" font-size="11" fill="#334155">php artisan serve</text>
+  <text x="124" y="118" text-anchor="middle" font-family="system-ui,Segoe UI,sans-serif" font-size="10" fill="#0f766e">http://localhost:8000</text>
+  <rect x="260" y="48" width="200" height="88" rx="8" fill="#fff" stroke="#64748b" stroke-width="1.5"/>
+  <text x="360" y="76" text-anchor="middle" font-family="system-ui,Segoe UI,sans-serif" font-size="12" font-weight="600" fill="#0f172a">Terminal 2</text>
+  <text x="360" y="98" text-anchor="middle" font-family="system-ui,Segoe UI,sans-serif" font-size="11" fill="#334155">npm run dev</text>
+  <text x="360" y="118" text-anchor="middle" font-family="system-ui,Segoe UI,sans-serif" font-size="10" fill="#0f766e">Vite HMR · puerto 5173</text>
+  <rect x="496" y="52" width="200" height="80" rx="8" fill="#ecfdf5" stroke="#0f766e" stroke-width="1.5"/>
+  <text x="596" y="82" text-anchor="middle" font-family="system-ui,Segoe UI,sans-serif" font-size="12" font-weight="600" fill="#0f172a">Navegador</text>
+  <text x="596" y="104" text-anchor="middle" font-family="system-ui,Segoe UI,sans-serif" font-size="10" fill="#334155">Peticiones HTML a Laravel</text>
+  <path d="M 224 92 L 252 92" stroke="#94a3b8" stroke-width="2" fill="none" marker-end="url(#mdl)"/>
+  <path d="M 460 92 L 492 92" stroke="#94a3b8" stroke-width="2" fill="none" marker-end="url(#mdl)"/>
+  <text x="360" y="168" text-anchor="middle" font-family="system-ui,Segoe UI,sans-serif" font-size="10" fill="#64748b">En desarrollo, Vite inyecta/hot-reload de assets; en producción se usa npm run build.</text>
+  <text x="360" y="222" text-anchor="middle" font-family="system-ui,Segoe UI,sans-serif" font-size="10" fill="#64748b">Diagrama conceptual; no es captura de pantalla del producto.</text>
+  <defs>
+    <marker id="mdl" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+</svg>

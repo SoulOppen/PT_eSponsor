@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 200" role="img" aria-labelledby="title2 desc2">
   <title id="title2">Flujo del sistema de bloques</title>
-  <desc id="desc2">config/blocks.php al registro, API de esquemas, editor Vue y partials Blade p˙blicos.</desc>
+  <desc id="desc2">config/blocks.php al registro, API de esquemas, editor Vue y partials Blade publicos.</desc>
   <rect width="760" height="200" fill="#f8fafc"/>
-  <text x="380" y="26" text-anchor="middle" font-family="system-ui,Segoe UI,sans-serif" font-size="15" font-weight="600" fill="#0f172a">Sistema de bloques (esquema í editor y p˙blico)</text>
+  <text x="380" y="26" text-anchor="middle" font-family="system-ui,Segoe UI,sans-serif" font-size="15" font-weight="600" fill="#0f172a">Sistema de bloques (esquema, editor y publico)</text>
   <rect x="20" y="48" width="140" height="56" rx="6" fill="#fff" stroke="#64748b" stroke-width="1.5"/>
   <text x="90" y="82" text-anchor="middle" font-family="system-ui,Segoe UI,sans-serif" font-size="11" fill="#0f172a">config/blocks.php</text>
   <path d="M 162 76 L 198 76" stroke="#94a3b8" stroke-width="2" fill="none" marker-end="url(#mb)"/>
@@ -17,8 +17,8 @@
   <text x="660" y="72" text-anchor="middle" font-family="system-ui,Segoe UI,sans-serif" font-size="11" font-weight="600" fill="#0f172a">Editor Vue</text>
   <text x="660" y="90" text-anchor="middle" font-family="system-ui,Segoe UI,sans-serif" font-size="10" fill="#334155">FieldRenderer.vue</text>
   <text x="380" y="128" text-anchor="middle" font-family="system-ui,Segoe UI,sans-serif" font-size="10" fill="#64748b">Mismo tipo de bloque: partial Blade</text>
-  <text x="380" y="146" text-anchor="middle" font-family="system-ui,Segoe UI,sans-serif" font-size="10" fill="#64748b">resources/views/public/blocks/_&lt;tipo&gt;.blade.php ∑ props en JSON (BD)</text>
-  <text x="380" y="182" text-anchor="middle" font-family="system-ui,Segoe UI,sans-serif" font-size="10" fill="#64748b">Diagrama conceptual; nombres de archivos seg˙n README.</text>
+  <text x="380" y="146" text-anchor="middle" font-family="system-ui,Segoe UI,sans-serif" font-size="10" fill="#64748b">resources/views/public/blocks/_&lt;tipo&gt;.blade.php ù props en JSON (BD)</text>
+  <text x="380" y="182" text-anchor="middle" font-family="system-ui,Segoe UI,sans-serif" font-size="10" fill="#64748b">Diagrama conceptual; nombres de archivos segùn README.</text>
   <defs>
     <marker id="mb" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
       <path d="M0,0 L8,4 L0,8 Z" fill="#94a3b8"/>
